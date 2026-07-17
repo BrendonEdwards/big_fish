@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Big Fish — Topographical Isolation</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <section class="hero" aria-label="Application title">
+        <p class="eyebrow">Topographical isolation</p>
+        <h1>Big Fish</h1>
+        <p>Explore high-prominence summits, their nearest higher neighbours, and the isolation circles that define them.</p>
+      </section>
+
+      <aside id="info-panel" class="info-panel" aria-live="polite">
+        <h2 id="summit-name">Select a summit</h2>
+        <dl>
+          <div><dt>Elevation</dt><dd id="summit-elevation">—</dd></div>
+          <div><dt>Nearest higher neighbour</dt><dd id="summit-nhn">—</dd></div>
+          <div><dt>Isolation</dt><dd id="summit-isolation">—</dd></div>
+        </dl>
+        <p id="summit-notes">Click a peak marker or isolation circle to inspect map-native feature data.</p>
+      </aside>
+
+      <div id="map" aria-label="Interactive globe map"></div>
+    </main>
+    <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
