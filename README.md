@@ -20,7 +20,7 @@ The default style in `src/main.js` uses Esri World Imagery tiles and does not re
 ## Vercel deployment notes
 
 1. Import the repository into Vercel.
-2. Use build command `npm run build`. Because this is a static MapLibre page, set the output directory to the repository root (or leave the build output setting empty for Vercel static deployment).
+2. Use build command `npm run build` and output directory `dist`. The build script validates the MapLibre configuration and copies the static files into `dist` for Vercel.
 3. Add any provider token as a Vercel Project Environment Variable. If you later introduce a bundler, keep the public-client prefix convention for that tool (for example, `VITE_` with Vite).
 4. Redeploy after changing map provider configuration or token restrictions.
 
