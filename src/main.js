@@ -16,27 +16,66 @@ const SATELLITE_STYLE = {
   layers: [{ id: 'satellite', type: 'raster', source: 'satellite' }],
 };
 
-const researchedLocations = {
-  everest: location(27.988333, 86.925278),
-  aconcagua: location(-32.653179, -70.010864),
-  denali: location(63.06917, -151.00639),
-  kilimanjaro: location(-3.067425, 37.355627),
-  elbrus: location(43.349938, 42.44533),
-  vinson: location(-78.525483, -85.617147),
-  puncakJaya: location(-4.078229, 137.157347),
-  tirichMir: location(36.25417, 71.84333),
-  mountKinabalu: location(6.075, 116.558611),
-};
 
-const summits = [
-  { id: 'everest', name: 'Mount Everest', elevationM: 8848.86, coordinates: researchedLocations.everest.coordinates, nhn: null, isolationKm: 40075, notes: 'Highest point on Earth; isolation wraps the globe.' },
-  { id: 'aconcagua', name: 'Aconcagua', elevationM: 6962, coordinates: researchedLocations.aconcagua.coordinates, nhn: 'Tirich Mir', nhnCoordinates: researchedLocations.tirichMir.coordinates, isolationKm: 16517.62, notes: 'Highest summit outside Asia.' },
-  { id: 'denali', name: 'Denali', elevationM: 6190, coordinates: researchedLocations.denali.coordinates, nhn: 'Aconcagua', nhnCoordinates: researchedLocations.aconcagua.coordinates, isolationKm: 7450, notes: "North America's highest peak." },
-  { id: 'kilimanjaro', name: 'Kilimanjaro', elevationM: 5895, coordinates: researchedLocations.kilimanjaro.coordinates, nhn: 'Mount Everest', nhnCoordinates: researchedLocations.everest.coordinates, isolationKm: 5510, notes: "Africa's highest free-standing volcanic mountain." },
-  { id: 'elbrus', name: 'Mount Elbrus', elevationM: 5642, coordinates: researchedLocations.elbrus.coordinates, nhn: 'Mount Everest', nhnCoordinates: researchedLocations.everest.coordinates, isolationKm: 2473, notes: "Europe's conventional high point." },
-  { id: 'vinson', name: 'Vinson Massif', elevationM: 4892, coordinates: researchedLocations.vinson.coordinates, nhn: 'Aconcagua', nhnCoordinates: researchedLocations.aconcagua.coordinates, isolationKm: 4910.65, notes: "Antarctica's highest massif." },
-  { id: 'puncak-jaya', name: 'Puncak Jaya', elevationM: 4884, coordinates: researchedLocations.puncakJaya.coordinates, nhn: 'Mount Kinabalu', nhnCoordinates: researchedLocations.mountKinabalu.coordinates, isolationKm: 5235.05, notes: "Highest island peak in the world." },
+const peakData = [
+  { id: 'everest', name: 'Mount Everest', elevationM: 8848.86, latitude: 27.988333, longitude: 86.925278, parent: null, notes: 'Highest point on Earth; isolation wraps the globe.' },
+  { id: 'k2', name: 'K2', elevationM: 8611, latitude: 35.880833, longitude: 76.515833, parent: 'Mount Everest', notes: 'Highest summit of the Karakoram.' },
+  { id: 'kangchenjunga', name: 'Kangchenjunga', elevationM: 8586, latitude: 27.7025, longitude: 88.1475, parent: 'Mount Everest', notes: 'Highest summit in India and third-highest on Earth.' },
+  { id: 'lhotse', name: 'Lhotse', elevationM: 8516, latitude: 27.961667, longitude: 86.933056, parent: 'Mount Everest', notes: 'Connected to Everest by the South Col.' },
+  { id: 'makalu', name: 'Makalu', elevationM: 8485, latitude: 27.889722, longitude: 87.088889, parent: 'Mount Everest', notes: 'Fifth-highest mountain on Earth.' },
+  { id: 'cho-oyu', name: 'Cho Oyu', elevationM: 8188, latitude: 28.094167, longitude: 86.660833, parent: 'Mount Everest', notes: 'Major Mahalangur Himalaya summit west of Everest.' },
+  { id: 'dhaulagiri-i', name: 'Dhaulagiri I', elevationM: 8167, latitude: 28.696667, longitude: 83.493333, parent: 'K2', notes: 'Highest summit wholly within Nepal.' },
+  { id: 'manaslu', name: 'Manaslu', elevationM: 8163, latitude: 28.549444, longitude: 84.559722, parent: 'Cho Oyu', notes: 'High point of the Manaslu Himalaya.' },
+  { id: 'nanga-parbat', name: 'Nanga Parbat', elevationM: 8126, latitude: 35.2375, longitude: 74.589167, parent: 'Dhaulagiri I', notes: 'Western anchor of the Himalayan eight-thousanders.' },
+  { id: 'annapurna-i', name: 'Annapurna I', elevationM: 8091, latitude: 28.595833, longitude: 83.820278, parent: 'Cho Oyu', notes: 'High point of the Annapurna massif.' },
+  { id: 'gasherbrum-i', name: 'Gasherbrum I', elevationM: 8080, latitude: 35.724583, longitude: 76.696389, parent: 'K2', notes: 'Also known as Hidden Peak.' },
+  { id: 'broad-peak', name: 'Broad Peak', elevationM: 8051, latitude: 35.810556, longitude: 76.568333, parent: 'Gasherbrum I', notes: 'Eight-thousander near K2.' },
+  { id: 'gasherbrum-ii', name: 'Gasherbrum II', elevationM: 8035, latitude: 35.758333, longitude: 76.653333, parent: 'Gasherbrum I', notes: 'Karakoram eight-thousander in the Gasherbrum group.' },
+  { id: 'shishapangma', name: 'Shishapangma', elevationM: 8027, latitude: 28.352222, longitude: 85.779722, parent: 'Cho Oyu', notes: 'The only eight-thousander wholly in Tibet.' },
+  { id: 'gyachung-kang', name: 'Gyachung Kang', elevationM: 7952, latitude: 28.098333, longitude: 86.742, parent: 'Cho Oyu', notes: 'Highest summit below 8,000 metres.' },
+  { id: 'annapurna-ii', name: 'Annapurna II', elevationM: 7937, latitude: 28.539722, longitude: 84.121944, parent: 'Annapurna I', notes: 'Eastern anchor of the Annapurna massif.' },
+  { id: 'gasherbrum-iv', name: 'Gasherbrum IV', elevationM: 7932, latitude: 35.759, longitude: 76.616, parent: 'Gasherbrum II', notes: 'Steep summit in the Gasherbrum group.' },
+  { id: 'himalchuli', name: 'Himalchuli', elevationM: 7893, latitude: 28.436389, longitude: 84.639444, parent: 'Manaslu', notes: 'Prominent Manaslu Himalaya summit.' },
+  { id: 'distaghil-sar', name: 'Distaghil Sar', elevationM: 7884, latitude: 36.325278, longitude: 75.188333, parent: 'K2', notes: 'Highest mountain of the Hispar Muztagh.' },
+  { id: 'ngadi-chuli', name: 'Ngadi Chuli', elevationM: 7871, latitude: 28.503333, longitude: 84.566667, parent: 'Manaslu', notes: 'Also known as Peak 29.' },
+  { id: 'khunyang-chhish', name: 'Khunyang Chhish', elevationM: 7823, latitude: 36.200833, longitude: 75.207222, parent: 'Distaghil Sar', notes: 'High Hispar Karakoram summit.' },
+  { id: 'masherbrum', name: 'Masherbrum', elevationM: 7821, latitude: 35.6425, longitude: 76.305556, parent: 'Gasherbrum I', notes: 'Also known as K1.' },
+  { id: 'nanda-devi', name: 'Nanda Devi', elevationM: 7817, latitude: 30.375278, longitude: 79.970833, parent: 'Dhaulagiri I', notes: 'High point of the Garhwal Himalaya.' },
+  { id: 'chomo-lonzo', name: 'Chomo Lonzo', elevationM: 7804, latitude: 27.929722, longitude: 87.108333, parent: 'Makalu', notes: 'Tibetan summit north-east of Makalu.' },
+  { id: 'batura-sar', name: 'Batura Sar', elevationM: 7795, latitude: 36.506389, longitude: 74.522778, parent: 'Distaghil Sar', notes: 'Highest summit of the Batura Muztagh.' },
+  { id: 'rakaposhi', name: 'Rakaposhi', elevationM: 7788, latitude: 36.1425, longitude: 74.489167, parent: 'Khunyang Chhish', notes: 'Prominent Karakoram peak above the Hunza valley.' },
+  { id: 'namcha-barwa', name: 'Namcha Barwa', elevationM: 7782, latitude: 29.630833, longitude: 95.055278, parent: 'Kangchenjunga', notes: 'Eastern Himalayan high point near the Yarlung Tsangpo bend.' },
+  { id: 'kanjut-sar', name: 'Kanjut Sar', elevationM: 7760, latitude: 36.205, longitude: 75.416, parent: 'Khunyang Chhish', notes: 'Hispar Karakoram summit.' },
+  { id: 'kamet', name: 'Kamet', elevationM: 7756, latitude: 30.920278, longitude: 79.591667, parent: 'Nanda Devi', notes: 'Major Garhwal Himalaya summit.' },
+  { id: 'dhaulagiri-ii', name: 'Dhaulagiri II', elevationM: 7751, latitude: 28.764167, longitude: 83.388889, parent: 'Dhaulagiri I', notes: 'Second-highest summit of the Dhaulagiri Himalaya.' },
+  { id: 'saltoro-kangri', name: 'Saltoro Kangri', elevationM: 7742, latitude: 35.399167, longitude: 76.847222, parent: 'Gasherbrum I', notes: 'High point of the Saltoro Karakoram.' },
+  { id: 'jannu', name: 'Jannu', elevationM: 7711, latitude: 27.681389, longitude: 88.044167, parent: 'Kangchenjunga', notes: 'Also known as Kumbhakarna.' },
+  { id: 'tirich-mir', name: 'Tirich Mir', elevationM: 7708, latitude: 36.254167, longitude: 71.843333, parent: 'Batura Sar', notes: 'Highest summit of the Hindu Kush.' },
+  { id: 'gurla-mandhata', name: 'Gurla Mandhata', elevationM: 7694, latitude: 30.445833, longitude: 81.295278, parent: 'Dhaulagiri I', notes: 'High summit near Lake Manasarovar.' },
+  { id: 'saser-kangri-i', name: 'Saser Kangri I', elevationM: 7672, latitude: 34.866, longitude: 77.753, parent: 'Gasherbrum I', notes: 'High point of the Saser Muztagh.' },
+  { id: 'chogolisa', name: 'Chogolisa', elevationM: 7665, latitude: 35.613611, longitude: 76.574, parent: 'Gasherbrum I', notes: 'Masherbrum Karakoram summit.' },
+  { id: 'kongur-tagh', name: 'Kongur Tagh', elevationM: 7649, latitude: 38.593056, longitude: 75.313889, parent: 'Distaghil Sar', notes: 'Highest summit of the Kongur Shan.' },
+  { id: 'shispare', name: 'Shispare', elevationM: 7611, latitude: 36.44, longitude: 74.681111, parent: 'Batura Sar', notes: 'Batura Muztagh summit.' },
+  { id: 'trivor', name: 'Trivor', elevationM: 7577, latitude: 36.287778, longitude: 75.084444, parent: 'Distaghil Sar', notes: 'Hispar Karakoram summit.' },
+  { id: 'gangkhar-puensum', name: 'Gangkhar Puensum', elevationM: 7570, latitude: 28.047222, longitude: 90.455833, parent: 'Kangchenjunga', notes: 'Highest unclimbed mountain commonly cited.' },
 ];
+
+const byName = new Map(peakData.map((peak) => [peak.name, peak]));
+const summits = peakData.map((peak) => {
+  const parent = byName.get(peak.parent);
+  const coordinates = location(peak.latitude, peak.longitude).coordinates;
+  const nhnCoordinates = parent ? location(parent.latitude, parent.longitude).coordinates : null;
+  return {
+    id: peak.id,
+    name: peak.name,
+    elevationM: peak.elevationM,
+    coordinates,
+    nhn: parent?.name ?? null,
+    nhnCoordinates,
+    isolationKm: parent ? Math.round(distanceKm(coordinates, nhnCoordinates)) : 40075,
+    notes: peak.notes,
+  };
+});
 
 const summitCollection = collection(summits.map((summit) => point(summit.coordinates, summit, summit.id)));
 const nhnCollection = collection(summits.filter((summit) => summit.nhnCoordinates).map((summit) => point(summit.nhnCoordinates, {
@@ -44,15 +83,8 @@ const nhnCollection = collection(summits.filter((summit) => summit.nhnCoordinate
   name: summit.nhn,
   relatedSummit: summit.name,
 })));
-const arcCollection = collection(summits.filter((summit) => summit.nhnCoordinates).map((summit) => lineString(greatCircle(summit.coordinates, summit.nhnCoordinates), {
-  summitId: summit.id,
-  name: `${summit.name} → ${summit.nhn}`,
-})));
-const circleCollection = collection(summits.filter((summit) => summit.isolationKm < 10000).map((summit) => polygon([circle(summit.coordinates, summit.isolationKm)], {
-  summitId: summit.id,
-  name: `${summit.name} isolation`,
-  isolationKm: summit.isolationKm,
-})));
+const arcCollection = collection([]);
+const circleCollection = collection([]);
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -101,11 +133,23 @@ function selectSummit(summitId) {
   document.querySelector('#summit-nhn').textContent = summit.nhn ?? 'None — global high point';
   document.querySelector('#summit-isolation').textContent = `${summit.isolationKm.toLocaleString()} km`;
   document.querySelector('#summit-notes').textContent = summit.notes;
+  updateSelectedOverlays(summit);
   activePopup?.remove();
   activePopup = new maplibregl.Popup({ closeButton: false, offset: 16 })
     .setLngLat(summit.coordinates)
     .setHTML(`<strong>${summit.name}</strong><br>${summit.elevationM.toLocaleString()} m`)
     .addTo(map);
+}
+
+function updateSelectedOverlays(summit) {
+  const circleFeature = summit.isolationKm < 10000
+    ? polygon([circle(summit.coordinates, summit.isolationKm)], { summitId: summit.id, name: `${summit.name} isolation`, isolationKm: summit.isolationKm })
+    : null;
+  const arcFeature = summit.nhnCoordinates
+    ? lineString(greatCircle(summit.coordinates, summit.nhnCoordinates), { summitId: summit.id, name: `${summit.name} → ${summit.nhn}` })
+    : null;
+  map.getSource('isolation-circles')?.setData(collection(circleFeature ? [circleFeature] : []));
+  map.getSource('summit-arcs')?.setData(collection(arcFeature ? [arcFeature] : []));
 }
 
 function location(latitude, longitude) {
@@ -168,6 +212,15 @@ function vectorToLonLat([x, y, z]) {
 
 function dot(a, b) {
   return a.reduce((sum, value, index) => sum + value * b[index], 0);
+}
+
+function distanceKm(start, end) {
+  const [startLongitude, startLatitude] = start.map(toRadians);
+  const [endLongitude, endLatitude] = end.map(toRadians);
+  const deltaLatitude = endLatitude - startLatitude;
+  const deltaLongitude = endLongitude - startLongitude;
+  const a = Math.sin(deltaLatitude / 2) ** 2 + Math.cos(startLatitude) * Math.cos(endLatitude) * Math.sin(deltaLongitude / 2) ** 2;
+  return 6371.0088 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function toRadians(degrees) { return (degrees * Math.PI) / 180; }

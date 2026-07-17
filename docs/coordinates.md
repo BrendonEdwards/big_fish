@@ -1,15 +1,9 @@
 # Coordinate research
 
-All application coordinates are stored as WGS84 latitude/longitude source values in `src/main.js` and converted to GeoJSON `[longitude, latitude]` arrays through the `location(latitude, longitude)` helper.
+The app now maps the first 40 ranked summits from the Wikipedia-derived highest-mountains table instead of the earlier seven-summit sample. Source latitude/longitude values are stored in `src/main.js` as WGS84 decimal degrees and converted to GeoJSON `[longitude, latitude]` arrays through `location(latitude, longitude)`.
 
-| Feature | Latitude | Longitude | Source |
-| --- | ---: | ---: | --- |
-| Mount Everest | 27.988333 | 86.925278 | Wikipedia coordinate listing: `27°59′18″N 86°55′31″E` |
-| Aconcagua | -32.653179 | -70.010864 | LatLong.net coordinate listing |
-| Denali | 63.069170 | -151.006390 | Wikipedia coordinate listing: `63°4′9″N 151°0′23″W` |
-| Kilimanjaro | -3.067425 | 37.355627 | Coordinates-converter WGS84 listing |
-| Mount Elbrus | 43.349938 | 42.445330 | Coordinates-converter WGS84 listing |
-| Vinson Massif | -78.525483 | -85.617147 | Peakbagger WGS84 listing |
-| Puncak Jaya | -4.078229 | 137.157347 | Google Maps/Street View coordinate reference linked from the Puncak Jaya article |
-| Tirich Mir | 36.254170 | 71.843330 | Wikipedia coordinate listing: `36°15′15″N 71°50′36″E` |
-| Mount Kinabalu | 6.075000 | 116.558611 | Wikipedia coordinate listing: `06°04′30″N 116°33′31″E` |
+The table data was cross-checked against public coordinate listings while entering the points manually. The build script also fails if fewer than 40 peak records are present.
+
+Primary list source: <https://en.wikipedia.org/wiki/List_of_highest_mountains_on_Earth>
+
+Additional coordinate cross-check sources used for spot checks include Wikipedia mountain pages, Peakbagger, LatLong.net, Coordinates Converter, and Google Maps coordinate links where a mountain page did not expose decimal WGS84 coordinates directly.
