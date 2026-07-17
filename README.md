@@ -4,7 +4,7 @@ Topographical isolation explorer for notable high-prominence peaks. The app uses
 
 ## Rendering path
 
-This rewrite chooses **MapLibre GL JS** with globe projection, WGS84 `[longitude, latitude]` GeoJSON coordinates, and Esri World Imagery raster satellite tiles. MapLibre provides native pan, pitch, rotation, wheel zoom, feature picking, and GeoJSON layer anchoring without requiring a Mapbox token.
+This rewrite chooses **MapLibre GL JS** with globe projection, researched WGS84 summit locations converted to GeoJSON `[longitude, latitude]` coordinates, and Esri World Imagery raster satellite tiles. MapLibre provides native pan, pitch, rotation, wheel zoom, feature picking, and GeoJSON layer anchoring without requiring a Mapbox token.
 
 ## Local development
 
@@ -12,6 +12,10 @@ This rewrite chooses **MapLibre GL JS** with globe projection, WGS84 `[longitude
 npm install
 npm run dev
 ```
+
+## Coordinate data
+
+Summit and NHN target positions are researched as WGS84 latitude/longitude values and converted in code to GeoJSON `[longitude, latitude]` arrays. See `docs/coordinates.md` for the coordinate audit trail.
 
 ## Token and tile configuration
 

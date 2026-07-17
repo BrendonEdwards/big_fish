@@ -16,26 +16,26 @@ const SATELLITE_STYLE = {
   layers: [{ id: 'satellite', type: 'raster', source: 'satellite' }],
 };
 
-const summitCoordinates = {
-  everest: wgs84(86.925145, 27.988257),
-  aconcagua: wgs84(-70.012088, -32.653099),
-  denali: wgs84(-151.006347, 63.069042),
-  kilimanjaro: wgs84(37.354034, -3.076448),
-  elbrus: wgs84(42.436098, 43.353811),
-  vinson: wgs84(-85.617147, -78.525483),
-  puncakJaya: wgs84(137.158077, -4.078531),
-  tirichMirWestIV: wgs84(71.8139, 36.272),
-  mountKinabalu: wgs84(116.558313, 6.074985),
+const researchedLocations = {
+  everest: location(27.988333, 86.925278),
+  aconcagua: location(-32.653179, -70.010864),
+  denali: location(63.06917, -151.00639),
+  kilimanjaro: location(-3.067425, 37.355627),
+  elbrus: location(43.349938, 42.44533),
+  vinson: location(-78.525483, -85.617147),
+  puncakJaya: location(-4.078229, 137.157347),
+  tirichMir: location(36.25417, 71.84333),
+  mountKinabalu: location(6.075, 116.558611),
 };
 
 const summits = [
-  { id: 'everest', name: 'Mount Everest', elevationM: 8848.86, coordinates: summitCoordinates.everest, nhn: null, isolationKm: 40075, notes: 'Highest point on Earth; isolation wraps the globe.' },
-  { id: 'aconcagua', name: 'Aconcagua', elevationM: 6962, coordinates: summitCoordinates.aconcagua, nhn: 'Tirich Mir West IV', nhnCoordinates: summitCoordinates.tirichMirWestIV, isolationKm: 16517.62, notes: 'Highest summit outside Asia.' },
-  { id: 'denali', name: 'Denali', elevationM: 6190, coordinates: summitCoordinates.denali, nhn: 'Aconcagua', nhnCoordinates: summitCoordinates.aconcagua, isolationKm: 7450, notes: "North America's highest peak." },
-  { id: 'kilimanjaro', name: 'Kilimanjaro', elevationM: 5895, coordinates: summitCoordinates.kilimanjaro, nhn: 'Mount Everest', nhnCoordinates: summitCoordinates.everest, isolationKm: 5510, notes: "Africa's highest free-standing volcanic mountain." },
-  { id: 'elbrus', name: 'Mount Elbrus', elevationM: 5642, coordinates: summitCoordinates.elbrus, nhn: 'Mount Everest', nhnCoordinates: summitCoordinates.everest, isolationKm: 2473, notes: "Europe's conventional high point." },
-  { id: 'vinson', name: 'Vinson Massif', elevationM: 4892, coordinates: summitCoordinates.vinson, nhn: 'Aconcagua', nhnCoordinates: summitCoordinates.aconcagua, isolationKm: 4910.65, notes: "Antarctica's highest massif." },
-  { id: 'puncak-jaya', name: 'Puncak Jaya', elevationM: 4884, coordinates: summitCoordinates.puncakJaya, nhn: 'Mount Kinabalu', nhnCoordinates: summitCoordinates.mountKinabalu, isolationKm: 5235.05, notes: "Highest island peak in the world." },
+  { id: 'everest', name: 'Mount Everest', elevationM: 8848.86, coordinates: researchedLocations.everest.coordinates, nhn: null, isolationKm: 40075, notes: 'Highest point on Earth; isolation wraps the globe.' },
+  { id: 'aconcagua', name: 'Aconcagua', elevationM: 6962, coordinates: researchedLocations.aconcagua.coordinates, nhn: 'Tirich Mir', nhnCoordinates: researchedLocations.tirichMir.coordinates, isolationKm: 16517.62, notes: 'Highest summit outside Asia.' },
+  { id: 'denali', name: 'Denali', elevationM: 6190, coordinates: researchedLocations.denali.coordinates, nhn: 'Aconcagua', nhnCoordinates: researchedLocations.aconcagua.coordinates, isolationKm: 7450, notes: "North America's highest peak." },
+  { id: 'kilimanjaro', name: 'Kilimanjaro', elevationM: 5895, coordinates: researchedLocations.kilimanjaro.coordinates, nhn: 'Mount Everest', nhnCoordinates: researchedLocations.everest.coordinates, isolationKm: 5510, notes: "Africa's highest free-standing volcanic mountain." },
+  { id: 'elbrus', name: 'Mount Elbrus', elevationM: 5642, coordinates: researchedLocations.elbrus.coordinates, nhn: 'Mount Everest', nhnCoordinates: researchedLocations.everest.coordinates, isolationKm: 2473, notes: "Europe's conventional high point." },
+  { id: 'vinson', name: 'Vinson Massif', elevationM: 4892, coordinates: researchedLocations.vinson.coordinates, nhn: 'Aconcagua', nhnCoordinates: researchedLocations.aconcagua.coordinates, isolationKm: 4910.65, notes: "Antarctica's highest massif." },
+  { id: 'puncak-jaya', name: 'Puncak Jaya', elevationM: 4884, coordinates: researchedLocations.puncakJaya.coordinates, nhn: 'Mount Kinabalu', nhnCoordinates: researchedLocations.mountKinabalu.coordinates, isolationKm: 5235.05, notes: "Highest island peak in the world." },
 ];
 
 const summitCollection = collection(summits.map((summit) => point(summit.coordinates, summit, summit.id)));
@@ -108,8 +108,12 @@ function selectSummit(summitId) {
     .addTo(map);
 }
 
-function wgs84(longitude, latitude) {
-  return [longitude, latitude];
+function location(latitude, longitude) {
+  return {
+    latitude,
+    longitude,
+    coordinates: [longitude, latitude],
+  };
 }
 
 function point(coordinates, properties, id) {
