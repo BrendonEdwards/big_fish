@@ -15,26 +15,95 @@ const peaks = [
   {rank:12,name:'Pico de Orizaba',country:'Mexico',lat:19.029,lon:-97.269,elev:5636,iso:2690,nhn:'Mount Logan, Canada'},
   {rank:13,name:'Mount Logan',country:'Canada',lat:60.567,lon:-140.405,elev:5959,iso:2169,nhn:'Denali, United States'},
   {rank:14,name:'Mount Damavand',country:'Iran',lat:35.955,lon:52.109,elev:5610,iso:1165,nhn:'Kuh-e Shashgal, Afghanistan'},
-  {rank:15,name:'Mont Blanc',country:'France / Italy',lat:45.8326,lon:6.8652,elev:4808,iso:2812,nhn:'Kukurtlu Dome, Caucasus'},
-  {rank:16,name:'Olympus Mons',country:'Mars bonus',lat:18.65,lon:-133.8,elev:21900,iso:99999,nhn:'Probably the Sun? (not an Earth ranking)',mars:true}
+  {rank:15,name:'Mont Blanc',country:'France / Italy',lat:45.8326,lon:6.8652,elev:4808,iso:2812,nhn:'Kukurtlu Dome, Caucasus'}
 ];
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x020510, 0.08);
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, .1, 1000); camera.position.z = 4.2;
-const renderer = new THREE.WebGLRenderer({canvas:document.querySelector('#globe'), antialias:true, alpha:true});
-renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, .1, 1000);
+camera.position.z = 4.2;
+const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#globe'), antialias: true, alpha: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+const earthGroup = new THREE.Group();
+scene.add(earthGroup);
 const tex = new THREE.TextureLoader().load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg');
-const globe = new THREE.Mesh(new THREE.SphereGeometry(1.45,96,96), new THREE.MeshStandardMaterial({map:tex, roughness:.75, metalness:.05}));
-scene.add(globe); scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.47,96,96), new THREE.MeshBasicMaterial({color:0x75c9ff, transparent:true, opacity:.08, blending:THREE.AdditiveBlending})));
-scene.add(new THREE.AmbientLight(0x8fb7ff,1.4)); const sun = new THREE.DirectionalLight(0xffffff,2.8); sun.position.set(3,1.5,4); scene.add(sun);
-const group = new THREE.Group(); globe.add(group);
-function v(lat,lon,r=1.48){ const phi=(90-lat)*Math.PI/180, theta=(lon+180)*Math.PI/180; return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta), r*Math.cos(phi), r*Math.sin(phi)*Math.sin(theta)); }
-function addPeak(p){ const marker = new THREE.Mesh(new THREE.SphereGeometry(p.rank===1?.035:.024,16,16), new THREE.MeshBasicMaterial({color:p.mars?0xff8d5c:0xffd166})); marker.position.copy(v(p.lat,p.lon,1.52)); group.add(marker); const ringR = Math.min(1.35, Math.max(.08, p.iso/20004*1.45)); const ring = new THREE.Mesh(new THREE.RingGeometry(ringR, ringR+.01, 160), new THREE.MeshBasicMaterial({color:p.mars?0xff6b4a:0x3ddcff, transparent:true, opacity:p.rank<7?.34:.18, side:THREE.DoubleSide, blending:THREE.AdditiveBlending})); ring.position.copy(v(p.lat,p.lon,1.505)); ring.lookAt(new THREE.Vector3(0,0,0)); group.add(ring); }
+const globe = new THREE.Mesh(new THREE.SphereGeometry(1.45, 96, 96), new THREE.MeshStandardMaterial({ map: tex, roughness: .75, metalness: .05 }));
+const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.47, 96, 96), new THREE.MeshBasicMaterial({ color: 0x75c9ff, transparent: true, opacity: .08, blending: THREE.AdditiveBlending }));
+earthGroup.add(globe, atmosphere);
+scene.add(new THREE.AmbientLight(0x8fb7ff, 1.4));
+const sun = new THREE.DirectionalLight(0xffffff, 2.8);
+sun.position.set(3, 1.5, 4);
+scene.add(sun);
+
+const interactive = [];
+const byId = id => document.getElementById(id);
+let selected = 1;
+
+function v(lat, lon, r = 1.48) {
+  const phi = (90 - lat) * Math.PI / 180;
+  const theta = (lon + 180) * Math.PI / 180;
+  return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+}
+
+function addPeak(p, index) {
+  const marker = new THREE.Mesh(new THREE.SphereGeometry(p.rank === 1 ? .035 : .024, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffd166 }));
+  marker.position.copy(v(p.lat, p.lon, 1.52));
+  marker.userData.peakIndex = index;
+  earthGroup.add(marker);
+  interactive.push(marker);
+
+  const ringR = Math.min(1.35, Math.max(.08, p.iso / 20004 * 1.45));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(ringR, ringR + .018, 192), new THREE.MeshBasicMaterial({ color: 0x3ddcff, transparent: true, opacity: p.rank < 7 ? .38 : .2, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+  ring.position.copy(v(p.lat, p.lon, 1.505));
+  ring.lookAt(new THREE.Vector3(0, 0, 0));
+  ring.userData.peakIndex = index;
+  earthGroup.add(ring);
+  interactive.push(ring);
+}
+
+function update() {
+  const p = peaks[selected];
+  byId('name').textContent = p.name;
+  byId('rank').textContent = `#${p.rank}`;
+  byId('meta').textContent = `${p.country} · ${p.elev.toLocaleString()} m elevation · ${p.iso.toLocaleString()} km isolation`;
+  byId('nhn').textContent = `Nearest higher neighbour: ${p.nhn}.`;
+  byId('meter').style.width = `${Math.min(100, p.iso / 20004 * 100)}%`;
+}
+
 peaks.forEach(addPeak);
-let selected=1; const byId=id=>document.getElementById(id);
-function update(){ const p=peaks[selected]; byId('name').textContent=p.name; byId('rank').textContent=p.mars?'MARS':`#${p.rank}`; byId('meta').textContent=`${p.country} · ${p.elev.toLocaleString()} m elevation · ${p.iso===99999?'planetary bragging rights':p.iso.toLocaleString()+' km isolation'}`; byId('nhn').textContent=`Nearest higher neighbour: ${p.nhn}.`; byId('meter').style.width=`${Math.min(100,p.iso/20004*100)}%`; }
-byId('next').onclick=()=>{selected=(selected+1)%peaks.length; update();}; update();
-let dragging=false,lastX=0,lastY=0,vel=.0018; addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY}); addEventListener('pointerup',()=>dragging=false); addEventListener('pointermove',e=>{if(!dragging)return; group.rotation.y+=(e.clientX-lastX)*.006; group.rotation.x+=(e.clientY-lastY)*.006; lastX=e.clientX; lastY=e.clientY;}); addEventListener('wheel',e=>{camera.position.z=THREE.MathUtils.clamp(camera.position.z+e.deltaY*.002,2.4,6.5)});
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight)});
-function animate(){ requestAnimationFrame(animate); if(!dragging) group.rotation.y+=vel; renderer.render(scene,camera);} animate();
+byId('peak-count').textContent = peaks.length;
+byId('next').onclick = () => { selected = (selected + 1) % peaks.length; update(); };
+update();
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+function pick(clientX, clientY) {
+  pointer.x = (clientX / innerWidth) * 2 - 1;
+  pointer.y = -(clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hit = raycaster.intersectObjects(interactive, false)[0];
+  if (!hit) return false;
+  selected = hit.object.userData.peakIndex;
+  update();
+  return true;
+}
+
+let dragging = false, lastX = 0, lastY = 0, moved = false, vel = .0018;
+addEventListener('pointerdown', e => { dragging = true; moved = false; lastX = e.clientX; lastY = e.clientY; });
+addEventListener('pointerup', e => { if (!moved) pick(e.clientX, e.clientY); dragging = false; });
+addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX;
+  const dy = e.clientY - lastY;
+  moved = moved || Math.abs(dx) + Math.abs(dy) > 3;
+  earthGroup.rotation.y += dx * .006;
+  earthGroup.rotation.x += dy * .006;
+  lastX = e.clientX;
+  lastY = e.clientY;
+});
+addEventListener('wheel', e => { camera.position.z = THREE.MathUtils.clamp(camera.position.z + e.deltaY * .002, 2.4, 6.5); });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+function animate() { requestAnimationFrame(animate); if (!dragging) earthGroup.rotation.y += vel; renderer.render(scene, camera); }
+animate();
