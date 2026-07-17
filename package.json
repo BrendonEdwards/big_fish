@@ -1,0 +1,1 @@
+{"scripts":{"dev":"python3 -m http.server 5173","build":"node -e \"require('fs').mkdirSync('dist',{recursive:true}); for (const f of ['index.html']) require('fs').copyFileSync(f, 'dist/'+f); require('fs').cpSync('src','dist/src',{recursive:true});\"","preview":"python3 -m http.server 4173 -d dist"},"dependencies":{},"devDependencies":{}}
