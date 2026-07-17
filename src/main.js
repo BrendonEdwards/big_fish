@@ -2,6 +2,7 @@ const MAX_TILE_ZOOM = 19;
 const SATELLITE_STYLE = {
   version: 8,
   projection: { type: 'globe' },
+  glyphs: '/fonts/{fontstack}/{range}.pbf',
   sources: {
     satellite: {
       type: 'raster',
@@ -82,6 +83,7 @@ const nhnCollection = collection(summits.filter((summit) => summit.nhnCoordinate
   summitId: summit.id,
   name: summit.nhn,
   relatedSummit: summit.name,
+  isolationKm: summit.isolationKm,
 })));
 const arcCollection = collection([]);
 const circleCollection = collection([]);
@@ -100,6 +102,9 @@ map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-
 map.scrollZoom.setWheelZoomRate(1 / 300);
 
 let activePopup;
+let activeSummitId = null;
+let minimumIsolationKm = 0;
+const labelMarkers = new Map();
 
 map.on('load', () => {
   map.setProjection({ type: 'globe' });
@@ -113,20 +118,27 @@ map.on('load', () => {
   map.addLayer({ id: 'summit-arcs', type: 'line', source: 'summit-arcs', paint: { 'line-color': '#ffd166', 'line-width': 2, 'line-opacity': 0.86 } });
   map.addLayer({ id: 'nhn-points', type: 'circle', source: 'nhn-points', paint: { 'circle-color': '#b8f7ff', 'circle-radius': 5, 'circle-stroke-color': '#07324a', 'circle-stroke-width': 1.5 } });
   map.addLayer({ id: 'summits', type: 'circle', source: 'summits', paint: { 'circle-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#ffd166', '#ff4d6d'], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 5, 8, 12], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 } });
-  map.addLayer({ id: 'summit-labels', type: 'symbol', source: 'summits', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-offset': [0, 1.4], 'text-anchor': 'top' }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#07111f', 'text-halo-width': 1.2 } });
+  map.addLayer({ id: 'summit-labels', type: 'symbol', source: 'summits', layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 12, 'text-offset': [0, 1.4], 'text-anchor': 'top', 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#07111f', 'text-halo-width': 1.2 } });
 
-  ['summits', 'isolation-fill'].forEach((layerId) => {
-    map.on('click', layerId, (event) => selectSummit(event.features[0].properties.summitId || event.features[0].properties.id));
-    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+  map.on('click', (event) => {
+    const feature = getPrioritizedInteractiveFeature(event.point);
+    if (feature) selectSummit(feature.properties.summitId || feature.properties.id);
   });
 
-  selectSummit('everest');
+  map.on('mousemove', (event) => {
+    map.getCanvas().style.cursor = getPrioritizedInteractiveFeature(event.point) ? 'pointer' : '';
+  });
+
+  map.getCanvas().addEventListener('mouseleave', () => { map.getCanvas().style.cursor = ''; });
+  createHtmlFallbackLabels();
+  bindIsolationFilter();
+  applyIsolationFilter();
 });
 
 function selectSummit(summitId) {
   const summit = summits.find(({ id }) => id === summitId);
-  if (!summit) return;
+  if (!summit || summit.isolationKm < minimumIsolationKm) return;
+  activeSummitId = summit.id;
   for (const { id } of summits) map.setFeatureState({ source: 'summits', id }, { selected: id === summit.id });
   document.querySelector('#summit-name').textContent = summit.name;
   document.querySelector('#summit-elevation').textContent = `${summit.elevationM.toLocaleString()} m`;
@@ -139,6 +151,67 @@ function selectSummit(summitId) {
     .setLngLat(summit.coordinates)
     .setHTML(`<strong>${summit.name}</strong><br>${summit.elevationM.toLocaleString()} m`)
     .addTo(map);
+}
+
+function getPrioritizedInteractiveFeature(point) {
+  const features = map.queryRenderedFeatures(point, { layers: ['summits', 'isolation-fill'] });
+  return features.find((feature) => feature.layer.id === 'summits')
+    ?? features.find((feature) => feature.layer.id === 'isolation-fill')
+    ?? null;
+}
+
+function createHtmlFallbackLabels() {
+  for (const summit of summits) {
+    const label = document.createElement('button');
+    label.className = 'summit-html-label';
+    label.type = 'button';
+    label.textContent = summit.name;
+    label.addEventListener('click', () => selectSummit(summit.id));
+    const marker = new maplibregl.Marker({ element: label, anchor: 'top', offset: [0, 14] })
+      .setLngLat(summit.coordinates)
+      .addTo(map);
+    labelMarkers.set(summit.id, marker);
+  }
+}
+
+function bindIsolationFilter() {
+  const slider = document.querySelector('#isolation-filter');
+  const value = document.querySelector('#isolation-filter-value');
+  slider.max = String(Math.max(...summits.map((summit) => summit.isolationKm)));
+  slider.addEventListener('input', () => {
+    minimumIsolationKm = Number(slider.value);
+    value.textContent = `${minimumIsolationKm.toLocaleString()} km`;
+    applyIsolationFilter();
+  });
+}
+
+function applyIsolationFilter() {
+  const filter = ['>=', ['get', 'isolationKm'], minimumIsolationKm];
+  if (map.getLayer('summits')) map.setFilter('summits', filter);
+  if (map.getLayer('summit-labels')) map.setFilter('summit-labels', filter);
+  if (map.getLayer('nhn-points')) map.setFilter('nhn-points', filter);
+  for (const summit of summits) {
+    const markerElement = labelMarkers.get(summit.id)?.getElement();
+    if (markerElement) markerElement.hidden = summit.isolationKm < minimumIsolationKm;
+  }
+  const active = summits.find((summit) => summit.id === activeSummitId);
+  if (!active || active.isolationKm < minimumIsolationKm) {
+    const replacement = summits.find((summit) => summit.isolationKm >= minimumIsolationKm);
+    if (replacement) selectSummit(replacement.id);
+    else resetInfoPanel();
+  }
+}
+
+function resetInfoPanel() {
+  activeSummitId = null;
+  activePopup?.remove();
+  map.getSource('isolation-circles')?.setData(collection([]));
+  map.getSource('summit-arcs')?.setData(collection([]));
+  document.querySelector('#summit-name').textContent = 'Select a summit';
+  document.querySelector('#summit-elevation').textContent = '—';
+  document.querySelector('#summit-nhn').textContent = '—';
+  document.querySelector('#summit-isolation').textContent = '—';
+  document.querySelector('#summit-notes').textContent = 'No summits match the current isolation filter.';
 }
 
 function updateSelectedOverlays(summit) {
