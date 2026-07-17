@@ -16,14 +16,26 @@ const SATELLITE_STYLE = {
   layers: [{ id: 'satellite', type: 'raster', source: 'satellite' }],
 };
 
+const summitCoordinates = {
+  everest: wgs84(86.925145, 27.988257),
+  aconcagua: wgs84(-70.012088, -32.653099),
+  denali: wgs84(-151.006347, 63.069042),
+  kilimanjaro: wgs84(37.354034, -3.076448),
+  elbrus: wgs84(42.436098, 43.353811),
+  vinson: wgs84(-85.617147, -78.525483),
+  puncakJaya: wgs84(137.158077, -4.078531),
+  tirichMirWestIV: wgs84(71.8139, 36.272),
+  mountKinabalu: wgs84(116.558313, 6.074985),
+};
+
 const summits = [
-  { id: 'everest', name: 'Mount Everest', elevationM: 8848.86, coordinates: [86.925, 27.9881], nhn: null, isolationKm: 40075, notes: 'Highest point on Earth; isolation wraps the globe.' },
-  { id: 'aconcagua', name: 'Aconcagua', elevationM: 6961, coordinates: [-70.0109, -32.6532], nhn: 'Tirich Mir', nhnCoordinates: [71.8409, 36.2553], isolationKm: 16534, notes: 'Highest summit outside Asia.' },
-  { id: 'denali', name: 'Denali', elevationM: 6190, coordinates: [-151.0074, 63.0695], nhn: 'Aconcagua', nhnCoordinates: [-70.0109, -32.6532], isolationKm: 7450, notes: "North America's highest peak." },
-  { id: 'kilimanjaro', name: 'Kilimanjaro', elevationM: 5895, coordinates: [37.3556, -3.0674], nhn: 'Mount Everest', nhnCoordinates: [86.925, 27.9881], isolationKm: 5510, notes: "Africa's highest free-standing volcanic mountain." },
-  { id: 'elbrus', name: 'Mount Elbrus', elevationM: 5642, coordinates: [42.4453, 43.3499], nhn: 'Mount Everest', nhnCoordinates: [86.925, 27.9881], isolationKm: 2473, notes: "Europe's conventional high point." },
-  { id: 'vinson', name: 'Vinson Massif', elevationM: 4892, coordinates: [-85.6171, -78.5254], nhn: 'Aconcagua', nhnCoordinates: [-70.0109, -32.6532], isolationKm: 4911, notes: "Antarctica's highest massif." },
-  { id: 'puncak-jaya', name: 'Puncak Jaya', elevationM: 4884, coordinates: [137.1583, -4.0789], nhn: 'Mount Kinabalu', nhnCoordinates: [116.558, 6.075], isolationKm: 5262, notes: "Highest island peak in the world." },
+  { id: 'everest', name: 'Mount Everest', elevationM: 8848.86, coordinates: summitCoordinates.everest, nhn: null, isolationKm: 40075, notes: 'Highest point on Earth; isolation wraps the globe.' },
+  { id: 'aconcagua', name: 'Aconcagua', elevationM: 6962, coordinates: summitCoordinates.aconcagua, nhn: 'Tirich Mir West IV', nhnCoordinates: summitCoordinates.tirichMirWestIV, isolationKm: 16517.62, notes: 'Highest summit outside Asia.' },
+  { id: 'denali', name: 'Denali', elevationM: 6190, coordinates: summitCoordinates.denali, nhn: 'Aconcagua', nhnCoordinates: summitCoordinates.aconcagua, isolationKm: 7450, notes: "North America's highest peak." },
+  { id: 'kilimanjaro', name: 'Kilimanjaro', elevationM: 5895, coordinates: summitCoordinates.kilimanjaro, nhn: 'Mount Everest', nhnCoordinates: summitCoordinates.everest, isolationKm: 5510, notes: "Africa's highest free-standing volcanic mountain." },
+  { id: 'elbrus', name: 'Mount Elbrus', elevationM: 5642, coordinates: summitCoordinates.elbrus, nhn: 'Mount Everest', nhnCoordinates: summitCoordinates.everest, isolationKm: 2473, notes: "Europe's conventional high point." },
+  { id: 'vinson', name: 'Vinson Massif', elevationM: 4892, coordinates: summitCoordinates.vinson, nhn: 'Aconcagua', nhnCoordinates: summitCoordinates.aconcagua, isolationKm: 4910.65, notes: "Antarctica's highest massif." },
+  { id: 'puncak-jaya', name: 'Puncak Jaya', elevationM: 4884, coordinates: summitCoordinates.puncakJaya, nhn: 'Mount Kinabalu', nhnCoordinates: summitCoordinates.mountKinabalu, isolationKm: 5235.05, notes: "Highest island peak in the world." },
 ];
 
 const summitCollection = collection(summits.map((summit) => point(summit.coordinates, summit, summit.id)));
@@ -94,6 +106,10 @@ function selectSummit(summitId) {
     .setLngLat(summit.coordinates)
     .setHTML(`<strong>${summit.name}</strong><br>${summit.elevationM.toLocaleString()} m`)
     .addTo(map);
+}
+
+function wgs84(longitude, latitude) {
+  return [longitude, latitude];
 }
 
 function point(coordinates, properties, id) {

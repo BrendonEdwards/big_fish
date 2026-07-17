@@ -1,10 +1,10 @@
 # Big Fish
 
-Topographical isolation explorer for notable high-prominence peaks. The app uses MapLibre GL JS rather than a custom `THREE.Scene`, `SphereGeometry`, and raycaster stack, so peak markers, nearest-higher-neighbour (NHN) points, isolation circles, and summit-to-NHN arcs are all rendered as geographically anchored map layers.
+Topographical isolation explorer for notable high-prominence peaks. The app uses WGS84 longitude/latitude summit data with MapLibre GL JS rather than a custom `THREE.Scene`, `SphereGeometry`, and raycaster stack, so peak markers, nearest-higher-neighbour (NHN) points, isolation circles, and summit-to-NHN arcs are all rendered as geographically anchored map layers.
 
 ## Rendering path
 
-This rewrite chooses **MapLibre GL JS** with globe projection and Esri World Imagery raster satellite tiles. MapLibre provides native pan, pitch, rotation, wheel zoom, feature picking, and GeoJSON layer anchoring without requiring a Mapbox token.
+This rewrite chooses **MapLibre GL JS** with globe projection, WGS84 `[longitude, latitude]` GeoJSON coordinates, and Esri World Imagery raster satellite tiles. MapLibre provides native pan, pitch, rotation, wheel zoom, feature picking, and GeoJSON layer anchoring without requiring a Mapbox token.
 
 ## Local development
 
