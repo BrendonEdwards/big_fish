@@ -35,7 +35,7 @@ compute the equivalent object directly (see Geometry).
 
 Two pieces, cleanly separated:
 
-1. **`scripts/build-cells.py`** — Python 3.12 + NumPy, run offline by a
+1. **`scripts/build_cells.py`** — Python 3.12 + NumPy, run offline by a
    developer; output committed to the repo.
    - Downloads and caches the GeoNames `allCountries` dump (~400 MB zip,
      cached under `scripts/.cache/`, never committed).
