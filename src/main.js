@@ -148,7 +148,8 @@ map.on('load', () => {
 
   map.on('click', (event) => {
     const feature = getPrioritizedInteractiveFeature(event.point);
-    if (feature) selectSummit(feature.properties.summitId || feature.properties.id);
+    // promoteId moves a summit feature's id from properties.id to feature.id
+    if (feature) selectSummit(feature.properties.summitId ?? feature.id ?? feature.properties.id);
   });
 
   map.on('mousemove', (event) => {
@@ -202,6 +203,8 @@ function bindIsolationFilter() {
 }
 
 function applyIsolationFilter() {
+  // Filters evaluate against raw source properties, so ['get', 'id'] works here
+  // even though promoteId strips id from queryRenderedFeatures output.
   const filter = ['any', ['==', ['get', 'id'], 'everest'], ['>=', ['get', 'isolationKm'], minimumIsolationKm]];
   if (map.getLayer('summits')) map.setFilter('summits', filter);
   if (map.getLayer('summit-labels')) map.setFilter('summit-labels', filter);
