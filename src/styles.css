@@ -28,6 +28,7 @@ dl { display: grid; gap: .75rem; margin: 0; }
 dt { color: #8bd3ff; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 dd { margin: .1rem 0 0; color: #fff; }
 #summit-notes { margin: 1rem 0 0; color: #c9d8e8; line-height: 1.45; }
+.data-note { margin: .5rem 0 0; color: #7f93a8; font-size: .75rem; line-height: 1.4; }
 .maplibregl-popup-content { color: #07111f; border-radius: .75rem; padding: .75rem .9rem; }
 .maplibregl-ctrl-attrib { color: #132236; }
 @media (max-width: 720px) {
