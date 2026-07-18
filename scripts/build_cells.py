@@ -61,10 +61,17 @@ def parse_geonames_lines(lines):
 
 
 def load_geonames(cache_dir):
+    """Download (cached, atomic) and stream-parse the GeoNames allCountries dump."""
     cache_dir.mkdir(parents=True, exist_ok=True)
     zip_path = cache_dir / "allCountries.zip"
     if not zip_path.exists():
         print("downloading GeoNames allCountries.zip (~400 MB, one-time)...")
-        urllib.request.urlretrieve(GEONAMES_URL, zip_path)
+        part_path = zip_path.with_suffix(".zip.part")
+        try:
+            urllib.request.urlretrieve(GEONAMES_URL, part_path)
+            part_path.rename(zip_path)
+        except Exception:
+            part_path.unlink(missing_ok=True)
+            raise
     with zipfile.ZipFile(zip_path) as zf, zf.open("allCountries.txt") as fh:
         return parse_geonames_lines(io.TextIOWrapper(fh, encoding="utf-8"))
