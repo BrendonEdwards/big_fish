@@ -6,7 +6,6 @@ degrees for coordinates, radians for distances/bearings unless noted.
 import numpy as np
 import antimeridian
 from shapely.geometry import Polygon, box, mapping
-from pyproj import Geod
 
 EARTH_RADIUS_KM = 6371.0088
 CAP_DEGREES = 179.0
@@ -118,62 +117,52 @@ def ring_to_geojson_geometry(lats, lons, north_pole, south_pole):
     )
 
 
-_GEOD = Geod(ellps="WGS84")
-
-
-def _to_vector(lat, lon):
-    phi, lam = np.radians(lat), np.radians(lon)
-    return np.array([np.cos(phi) * np.cos(lam), np.cos(phi) * np.sin(lam), np.sin(phi)])
-
-
-def geodesic_points(lat1, lon1, lat2, lon2, step_km=200.0):
-    """Inclusive points along the great circle from 1 to 2, ~step_km apart."""
-    v1, v2 = _to_vector(lat1, lon1), _to_vector(lat2, lon2)
-    omega = np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0))
-    if np.sin(omega) < 1e-12:
-        return np.array([lat1, lat2]), np.array([lon1, lon2])
-    count = max(2, int(np.ceil(omega * EARTH_RADIUS_KM / step_km)) + 1)
-    fraction = np.linspace(0.0, 1.0, count)
-    a = np.sin((1 - fraction) * omega) / np.sin(omega)
-    b = np.sin(fraction * omega) / np.sin(omega)
-    v = a[:, None] * v1[None, :] + b[:, None] * v2[None, :]
-    lats = np.degrees(np.arctan2(v[:, 2], np.hypot(v[:, 0], v[:, 1])))
-    lons = np.degrees(np.arctan2(v[:, 1], v[:, 0]))
-    return lats, lons
-
-
-def _ring_winding(ring_lons):
-    """Net revolutions of a closed ring's longitudes around the polar axis:
-    +/-1 means the ring encloses exactly one pole, 0 means none."""
-    deltas = np.diff(np.asarray(ring_lons))
-    deltas = (deltas + 180.0) % 360.0 - 180.0
-    return int(round(deltas.sum() / 360.0))
-
-
-def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg, jailer_dists_km, step_km=200.0):
-    """Ring-of-jailers polygon: jailer vertices in bearing order, densified
-    geodesic edges, antimeridian/pole-safe. Returns (geojson geometry dict,
-    area_km2) or (None, None) when fewer than 3 jailers."""
+def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg, jailer_dists_km, step_deg=0.5):
+    """Ring-of-jailers polygon: jailer vertices in bearing order, edges swept
+    by interpolating bearing and distance from the hub (star-shaped by
+    construction, so the ring can never self-intersect; the boundary between
+    two jailers never dips below the nearer one's distance, so min boundary
+    distance stays >= the isolation, touching it at the NHN vertex).
+    Returns (geojson geometry dict, area_km2) or (None, None) for < 3 jailers."""
     if len(jailer_lats) < 3:
         return None, None
     order = np.argsort(jailer_bearings_deg)
-    lats = np.asarray(jailer_lats)[order]
-    lons = np.asarray(jailer_lons)[order]
-    ring_lats, ring_lons = [], []
-    for i in range(len(lats)):
-        j = (i + 1) % len(lats)
-        seg_lats, seg_lons = geodesic_points(lats[i], lons[i], lats[j], lons[j], step_km)
-        ring_lats.extend(seg_lats[:-1])
-        ring_lons.extend(seg_lons[:-1])
-    ring_lats.append(ring_lats[0])
-    ring_lons.append(ring_lons[0])
-    winding = _ring_winding(ring_lons)
-    assert abs(winding) <= 1, "simple jailer ring cannot wind more than once"
-    north = winding != 0 and float(np.mean(ring_lats)) > 0
-    south = winding != 0 and not north
-    coords = [(round(lon, 3), round(lat, 3)) for lon, lat in zip(ring_lons, ring_lats)]
-    fixed = antimeridian.fix_polygon(
-        Polygon(coords), fix_winding=True, force_north_pole=north, force_south_pole=south
-    )
-    area_m2, _ = _GEOD.geometry_area_perimeter(fixed)
-    return mapping(fixed), abs(area_m2) / 1e6
+    bearings = np.asarray(jailer_bearings_deg, dtype=float)[order]
+    dists = np.asarray(jailer_dists_km, dtype=float)[order] / EARTH_RADIUS_KM
+    theta_parts, r_parts = [], []
+    n = len(bearings)
+    for i in range(n):
+        j = (i + 1) % n
+        gap = (bearings[j] - bearings[i]) % 360.0
+        if gap == 0.0:
+            gap = 360.0 if n == 1 else step_deg
+        steps = max(1, int(np.ceil((gap if gap > 0 else step_deg) / step_deg)))
+        t = np.arange(steps) / steps
+        theta_parts.append(np.radians(bearings[i] + gap * t))
+        r_parts.append(dists[i] * (1 - t) + dists[j] * t)
+    theta = np.concatenate(theta_parts)
+    R = np.concatenate(r_parts)
+    # Exact spherical area of the hub-side region of a star-shaped ring:
+    # A = R_earth^2 * integral over theta of (1 - cos R(theta)) dtheta.
+    # Uniform for every case — normal rings, pole-containing rings, and the
+    # both-poles world-with-hole case — with no geodesic-library edge cases.
+    dtheta = np.diff(np.concatenate([theta, [theta[0] + 2.0 * np.pi]]))
+    assert np.isclose(dtheta.sum(), 2 * np.pi)
+    area_km2 = float(EARTH_RADIUS_KM ** 2 * np.sum((1.0 - np.cos(R)) * dtheta))
+    lats, lons = cell_ring(hub_lat, hub_lon, theta, R)
+    north, south = poles_inside(hub_lat, np.mod(theta, 2 * np.pi), R)
+    if north and south:
+        # Near-circular ring around the hub's antipode: represent directly as
+        # the world rectangle with the ring as a hole — no heuristics needed.
+        span = float(np.max(lons) - np.min(lons))
+        assert span < 350.0, "antipodal blob crossing the antimeridian is not supported"
+        hole = list(zip(lons.tolist(), lats.tolist()))
+        hole.append(hole[0])
+        shell = [(-180.0, -90.0), (180.0, -90.0), (180.0, 90.0), (-180.0, 90.0), (-180.0, -90.0)]
+        geometry = mapping(Polygon(shell, holes=[hole]))
+    else:
+        geometry = ring_to_geojson_geometry(lats, lons, north, south)
+    from shapely.geometry import shape
+    geom = shape(geometry)
+    assert geom.is_valid, "jailer ring must be a valid polygon"
+    return geometry, area_km2

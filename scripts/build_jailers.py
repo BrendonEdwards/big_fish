@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build dominance-cell GeoJSON for every summit in the app.
+"""Build jailer spokes/ring data (jailers.json) for every summit in the app.
 
 Run offline by a developer (never by CI):
 

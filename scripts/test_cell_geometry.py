@@ -150,16 +150,7 @@ def test_geometry_both_poles_world_with_hole():
 
 import pytest
 
-from cell_geometry import angular_distance_and_bearing, geodesic_points, jailer_ring
-
-
-def test_geodesic_points_endpoints_and_spacing():
-    lats, lons = geodesic_points(0.0, 0.0, 0.0, 90.0, step_km=500.0)
-    assert (lats[0], lons[0]) == (0.0, 0.0)
-    assert np.isclose(lats[-1], 0.0) and np.isclose(lons[-1], 90.0)
-    assert len(lats) >= 21  # ~10,000 km / 500 km
-    gaps = np.abs(np.diff(lons))
-    assert gaps.max() < 5.1  # roughly uniform spacing along the equator
+from cell_geometry import angular_distance_and_bearing, jailer_ring
 
 
 def _square_jailers():
@@ -179,8 +170,8 @@ def test_jailer_ring_square():
     assert geom.is_valid
     assert geom.contains(Point(0.0, 0.0))          # hub inside
     assert not geom.contains(Point(15.0, 15.0))    # corner-ward point outside
-    # spherical diamond, "radius" ~1,111 km: planar estimate 2r^2 ~ 2.47M km2
-    assert 2.0e6 < area < 3.2e6
+    # smooth quasi-circle of radius 10 deg: spherical cap 2*pi*R^2*(1-cos10) ~ 3.87M km2
+    assert 3.4e6 < area < 4.2e6
 
 
 def test_jailer_ring_needs_three_vertices():
@@ -200,7 +191,7 @@ def test_jailer_ring_antimeridian():
     geom = shape(geometry)
     assert geometry["type"] == "MultiPolygon" and geom.is_valid
     assert geom.bounds[0] >= -180 and geom.bounds[2] <= 180
-    assert 2.0e6 < area < 3.2e6
+    assert 3.4e6 < area < 4.2e6
 
 
 def test_jailer_ring_containing_south_pole():
@@ -218,11 +209,12 @@ def test_jailer_ring_containing_south_pole():
     assert area > 1.5e6
 
 
-def test_jailer_ring_narrow_cluster_far_side():
+def test_jailer_ring_narrow_cluster_wraps_hub():
     from shapely.geometry import Point, shape
 
-    # Aconcagua-like: every jailer in a narrow bearing arc on the far side of
-    # the planet — the "ring" is a blob over the cluster, not a hub loop.
+    # Aconcagua-like: all jailers in a narrow bearing arc ~150 deg away. The
+    # closing sweep turns the ring into a near-circle around the hub through
+    # the jailers — world minus the antipodal cap.
     hub_lat, hub_lon = -32.65, -70.01
     lats = np.array([30.0, 35.0, 28.0, 36.0])
     lons = np.array([75.0, 82.0, 88.0, 95.0])
@@ -232,6 +224,6 @@ def test_jailer_ring_narrow_cluster_far_side():
     )
     geom = shape(geometry)
     assert geom.is_valid
-    assert geom.contains(Point(83.0, 32.0))
-    assert not geom.contains(Point(-70.01, -32.65))
-    assert area < 5.0e6
+    assert geom.contains(Point(-70.01, -32.65))    # hub inside
+    assert not geom.contains(Point(110.0, 33.0))   # antipodal cap: outside
+    assert area > 3.0e8                            # near-global ring

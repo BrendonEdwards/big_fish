@@ -72,14 +72,24 @@ stale-elevation guard, per-summit exclusions) and the same
 }
 ```
 
-- Ring construction: jailer vertices in bearing order, each edge densified
-  along the geodesic (~1 vertex per 200 km), longitudes handled by
-  `antimeridian.fix_polygon` (poles: longitude-winding test on the densified
-  ring (±1 revolution ⇔ encloses exactly one pole, hemisphere chosen by mean
-  vertex latitude; 0 ⇔ none — narrow-arc jailer clusters like Aconcagua's
-  produce winding-0 blobs over the cluster that need no pole handling).
-- Area: `pyproj.Geod(ellps="WGS84").geometry_area_perimeter` on the fixed
-  ring (absolute value, km²). New venv dependency: `pyproj`.
+- Ring construction: jailer vertices in bearing order; edges are hub-bearing-
+  interpolated arcs (bearing and distance linearly interpolated between
+  adjacent jailers, 0.5° steps), star-shaped by construction — self-
+  intersection is impossible, and the boundary never dips below the nearer
+  adjacent jailer's distance, so min boundary distance ≥ isolation, with
+  equality at the NHN vertex. Poles via the exact star-shaped `poles_inside`
+  test. Single-pole rings use the v1 `ring_to_geojson_geometry` handling;
+  both-poles rings (Aconcagua's closing sweep across its empty bearing arc
+  produces one) are built directly as the world rectangle with the ring as an
+  interior hole — no geodesic-library heuristics needed, since the geometry
+  is fully determined. Every ring is hard-asserted shapely-valid inside
+  `jailer_ring`.
+- Area: computed directly from the sampled radius profile via the exact
+  spherical star-shaped-region formula, `R_earth² · ∫(1 − cos R(θ)) dθ`
+  over the full 360° sweep — uniform across normal, single-pole, and
+  both-poles rings alike, with no geodesic-library edge cases (a
+  pole-touching world-rectangle shell degenerates `pyproj`'s geodesic area
+  calculation to zero, which this sidesteps entirely). No `pyproj` dependency.
 - Everest: no entry. `< 3` jailers: `ring`/`ringAreaKm2` null, spokes still
   valid.
 - Validation (hard): min jailer `distanceKm` == computed isolation; Aconcagua
