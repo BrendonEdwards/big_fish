@@ -135,19 +135,20 @@ def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg,
         j = (i + 1) % n
         gap = (bearings[j] - bearings[i]) % 360.0
         if gap == 0.0:
-            gap = 360.0 if n == 1 else step_deg
+            gap = step_deg
         steps = max(1, int(np.ceil((gap if gap > 0 else step_deg) / step_deg)))
         t = np.arange(steps) / steps
         theta_parts.append(np.radians(bearings[i] + gap * t))
         r_parts.append(dists[i] * (1 - t) + dists[j] * t)
     theta = np.concatenate(theta_parts)
     R = np.concatenate(r_parts)
-    # Exact spherical area of the hub-side region of a star-shaped ring:
+    # Spherical integral (piecewise-linear radius profile sampled at 0.5°; sub-0.1% accuracy)
+    # of the hub-side region of a star-shaped ring:
     # A = R_earth^2 * integral over theta of (1 - cos R(theta)) dtheta.
     # Uniform for every case — normal rings, pole-containing rings, and the
     # both-poles world-with-hole case — with no geodesic-library edge cases.
     dtheta = np.diff(np.concatenate([theta, [theta[0] + 2.0 * np.pi]]))
-    assert np.isclose(dtheta.sum(), 2 * np.pi)
+    assert np.all(dtheta > 0), "ring bearing sweep must be strictly increasing"
     area_km2 = float(EARTH_RADIUS_KM ** 2 * np.sum((1.0 - np.cos(R)) * dtheta))
     lats, lons = cell_ring(hub_lat, hub_lon, theta, R)
     north, south = poles_inside(hub_lat, np.mod(theta, 2 * np.pi), R)

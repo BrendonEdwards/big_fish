@@ -84,8 +84,8 @@ stale-elevation guard, per-summit exclusions) and the same
   interior hole — no geodesic-library heuristics needed, since the geometry
   is fully determined. Every ring is hard-asserted shapely-valid inside
   `jailer_ring`.
-- Area: computed directly from the sampled radius profile via the exact
-  spherical star-shaped-region formula, `R_earth² · ∫(1 − cos R(θ)) dθ`
+- Area: computed directly from the sampled radius profile via the
+  spherical star-shaped-region formula (piecewise-linear radius profile sampled at 0.5°; sub-0.1% accuracy), `R_earth² · ∫(1 − cos R(θ)) dθ`
   over the full 360° sweep — uniform across normal, single-pole, and
   both-poles rings alike, with no geodesic-library edge cases (a
   pole-touching world-rectangle shell degenerates `pyproj`'s geodesic area
@@ -174,10 +174,10 @@ button in the panel; Esc/backdrop closes.
 ## Testing
 
 - **Pytest** (existing suite continues to pass minus deleted cell-file
-  assertions): ring builder (bearing-sorted vertices, geodesic
-  densification, antimeridian ring, <3-jailer degenerate, no-antipode
-  assert), area sanity (a known quadrilateral vs pyproj reference),
-  aggregate JSON schema.
+  assertions): ring builder (bearing-sorted vertices, bearing-interpolated
+  star-shaped edges, antimeridian ring, <3-jailer degenerate, narrow-cluster
+  hub-wrap, south-pole ring), spherical-integral area sanity vs the closed-form
+  cap formula, aggregate JSON schema.
 - **Smoke (real clicks, extends v1 script)**: select Kilimanjaro → spokes +
   ring + jailer labels render, panel stats present; open rankings, sort by
   area, click a row → selection changes; switch to Web mode → multiple
