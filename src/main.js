@@ -255,16 +255,29 @@ function getPrioritizedInteractiveFeature(point) {
 }
 
 function bindIsolationFilter() {
-  const slider = document.querySelector('#isolation-filter');
-  const value = document.querySelector('#isolation-filter-value');
-  slider.min = '0';
-  slider.max = '1000';
-  slider.value = '0';
+  const minSlider = document.querySelector('#isolation-filter');
+  const maxSlider = document.querySelector('#isolation-filter-max');
+  const minValue = document.querySelector('#isolation-filter-value');
+  const maxValue = document.querySelector('#isolation-filter-max-value');
   minimumIsolationKm = minFilterIsolationKm;
-  value.textContent = `${minimumIsolationKm.toLocaleString()} km`;
-  slider.addEventListener('input', () => {
-    minimumIsolationKm = isolationFromSlider(Number(slider.value));
-    value.textContent = `${minimumIsolationKm.toLocaleString()} km`;
+  maximumIsolationKm = maxFilterIsolationKm;
+  const render = () => {
+    minValue.textContent = `${minimumIsolationKm.toLocaleString()} km`;
+    maxValue.textContent = `${maximumIsolationKm.toLocaleString()} km`;
+  };
+  render();
+  minSlider.addEventListener('input', () => {
+    if (Number(minSlider.value) > Number(maxSlider.value)) maxSlider.value = minSlider.value;
+    minimumIsolationKm = isolationFromSlider(Number(minSlider.value));
+    maximumIsolationKm = isolationFromSlider(Number(maxSlider.value));
+    render();
+    applyIsolationFilter();
+  });
+  maxSlider.addEventListener('input', () => {
+    if (Number(maxSlider.value) < Number(minSlider.value)) minSlider.value = maxSlider.value;
+    minimumIsolationKm = isolationFromSlider(Number(minSlider.value));
+    maximumIsolationKm = isolationFromSlider(Number(maxSlider.value));
+    render();
     applyIsolationFilter();
   });
 }
@@ -272,12 +285,15 @@ function bindIsolationFilter() {
 function applyIsolationFilter() {
   // Filters evaluate against raw source properties, so ['get', 'id'] works here
   // even though promoteId strips id from queryRenderedFeatures output.
-  const filter = ['any', ['==', ['get', 'id'], 'everest'], ['>=', ['get', 'isolationKm'], minimumIsolationKm]];
+  const filter = ['any', ['==', ['get', 'id'], 'everest'], ['all',
+    ['>=', ['get', 'isolationKm'], minimumIsolationKm],
+    ['<=', ['get', 'isolationKm'], maximumIsolationKm],
+  ]];
   if (map.getLayer('summits')) map.setFilter('summits', filter);
   if (map.getLayer('summit-labels')) map.setFilter('summit-labels', filter);
   const active = summits.find((summit) => summit.id === activeSummitId);
-  if (!active || active.isolationKm < minimumIsolationKm) {
-    const replacement = summits.find((summit) => summit.id === 'everest') ?? summits.find((summit) => summit.isolationKm >= minimumIsolationKm);
+  if (!active || !summitPassesFilter(active)) {
+    const replacement = summits.find((summit) => summit.id === 'everest') ?? summits.find(summitPassesFilter);
     if (replacement) selectSummit(replacement.id);
     else resetInfoPanel();
   }

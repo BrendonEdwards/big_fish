@@ -31,9 +31,14 @@
           <label><input type="radio" name="display-mode" value="web" /> Web</label>
         </fieldset>
         <label class="filter-control" for="isolation-filter">
-          <span>Minimum isolation</span>
+          <span>Min isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
-          <input id="isolation-filter" type="range" min="0" max="40075" step="50" value="0" />
+          <input id="isolation-filter" type="range" min="0" max="1000" step="1" value="0" />
+        </label>
+        <label class="filter-control" for="isolation-filter-max">
+          <span>Max isolation</span>
+          <output id="isolation-filter-max-value" for="isolation-filter-max">0 km</output>
+          <input id="isolation-filter-max" type="range" min="0" max="1000" step="1" value="1000" />
         </label>
         <p id="summit-notes">Click a peak marker to see its ring of jailers.</p>
         <p class="data-note">Jailer data derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
