@@ -11,6 +11,9 @@ for (const expected of ['maplibregl.Map', 'type: \'geojson\'', 'MAX_TILE_ZOOM = 
     throw new Error(`Missing expected MapLibre implementation detail: ${expected}`);
   }
 }
+if (main.includes('summit-html-label') || main.includes('createHtmlFallbackLabels')) {
+  throw new Error('HTML label fallback must not be present; use native MapLibre layers for summit interaction.');
+}
 const peakCount = (main.match(/id: '/g) ?? []).length;
 if (peakCount < 40) {
   throw new Error(`Expected at least 40 mapped peaks, found ${peakCount}.`);

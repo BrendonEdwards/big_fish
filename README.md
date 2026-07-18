@@ -1,6 +1,6 @@
 # Big Fish
 
-Topographical isolation explorer for the 40 highest prominence-filtered peaks in the Wikipedia highest-mountains table. The app uses WGS84 longitude/latitude summit data with MapLibre GL JS rather than a custom `THREE.Scene`, `SphereGeometry`, and raycaster stack, so peak markers, nearest-higher-neighbour (NHN) points, isolation circles, and summit-to-NHN arcs are all rendered as geographically anchored map layers.
+Topographical isolation explorer for the 40 most topographically isolated summits on Earth. The app uses WGS84 longitude/latitude summit data with MapLibre GL JS rather than a custom `THREE.Scene`, `SphereGeometry`, and raycaster stack, so peak markers, nearest-higher-neighbour (NHN) points, isolation circles, and summit-to-NHN arcs are all rendered as geographically anchored map layers.
 
 ## Rendering path
 
@@ -15,7 +15,7 @@ npm run dev
 
 ## Coordinate data
 
-The 40 summit and NHN target positions are researched as WGS84 latitude/longitude values and converted in code to GeoJSON `[longitude, latitude]` arrays. See `docs/coordinates.md` for the coordinate audit trail.
+The 40 summit positions are the Wikipedia Topographic isolation table entries, with researched WGS84 latitude/longitude values and converted in code to GeoJSON `[longitude, latitude]` arrays. See `docs/coordinates.md` for the coordinate audit trail.
 
 ## Token and tile configuration
 
