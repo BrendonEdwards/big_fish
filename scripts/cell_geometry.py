@@ -6,6 +6,7 @@ degrees for coordinates, radians for distances/bearings unless noted.
 import numpy as np
 import antimeridian
 from shapely.geometry import Polygon, box, mapping
+from pyproj import Geod
 
 EARTH_RADIUS_KM = 6371.0088
 CAP_DEGREES = 179.0
@@ -115,3 +116,70 @@ def ring_to_geojson_geometry(lats, lons, north_pole, south_pole):
             fix_winding=True,
         )
     )
+
+
+_GEOD = Geod(ellps="WGS84")
+
+
+def _to_vector(lat, lon):
+    phi, lam = np.radians(lat), np.radians(lon)
+    return np.array([np.cos(phi) * np.cos(lam), np.cos(phi) * np.sin(lam), np.sin(phi)])
+
+
+def geodesic_points(lat1, lon1, lat2, lon2, step_km=200.0):
+    """Inclusive points along the great circle from 1 to 2, ~step_km apart."""
+    v1, v2 = _to_vector(lat1, lon1), _to_vector(lat2, lon2)
+    omega = np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0))
+    if np.sin(omega) < 1e-12:
+        return np.array([lat1, lat2]), np.array([lon1, lon2])
+    count = max(2, int(np.ceil(omega * EARTH_RADIUS_KM / step_km)) + 1)
+    fraction = np.linspace(0.0, 1.0, count)
+    a = np.sin((1 - fraction) * omega) / np.sin(omega)
+    b = np.sin(fraction * omega) / np.sin(omega)
+    v = a[:, None] * v1[None, :] + b[:, None] * v2[None, :]
+    lats = np.degrees(np.arctan2(v[:, 2], np.hypot(v[:, 0], v[:, 1])))
+    lons = np.degrees(np.arctan2(v[:, 1], v[:, 0]))
+    return lats, lons
+
+
+def _ring_pole_inside(target_bearing_deg, bearings_deg, dists_km, pole_dist_deg):
+    """Star-shaped pole test for a bearing-ordered vertex polygon: linearly
+    interpolate the boundary distance (in bearing space, wrapping) at the
+    pole's bearing and compare with the pole's distance from the hub."""
+    order = np.argsort(bearings_deg)
+    bearings = np.asarray(bearings_deg)[order]
+    dist_deg = np.degrees(np.asarray(dists_km)[order] / EARTH_RADIUS_KM)
+    nxt = int(np.searchsorted(bearings, target_bearing_deg) % len(bearings))
+    prev = (nxt - 1) % len(bearings)
+    span = (bearings[nxt] - bearings[prev]) % 360.0 or 360.0
+    t = ((target_bearing_deg - bearings[prev]) % 360.0) / span
+    boundary = dist_deg[prev] * (1 - t) + dist_deg[nxt] * t
+    return bool(boundary > pole_dist_deg)
+
+
+def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg, jailer_dists_km, step_km=200.0):
+    """Ring-of-jailers polygon: jailer vertices in bearing order, densified
+    geodesic edges, antimeridian/pole-safe. Returns (geojson geometry dict,
+    area_km2) or (None, None) when fewer than 3 jailers."""
+    if len(jailer_lats) < 3:
+        return None, None
+    order = np.argsort(jailer_bearings_deg)
+    lats = np.asarray(jailer_lats)[order]
+    lons = np.asarray(jailer_lons)[order]
+    ring_lats, ring_lons = [], []
+    for i in range(len(lats)):
+        j = (i + 1) % len(lats)
+        seg_lats, seg_lons = geodesic_points(lats[i], lons[i], lats[j], lons[j], step_km)
+        ring_lats.extend(seg_lats[:-1])
+        ring_lons.extend(seg_lons[:-1])
+    ring_lats.append(ring_lats[0])
+    ring_lons.append(ring_lons[0])
+    north = _ring_pole_inside(0.0, jailer_bearings_deg, jailer_dists_km, 90.0 - hub_lat)
+    south = _ring_pole_inside(180.0, jailer_bearings_deg, jailer_dists_km, 90.0 + hub_lat)
+    assert not (north and south), "jailer ring cannot contain both poles"
+    coords = [(round(lon, 3), round(lat, 3)) for lon, lat in zip(ring_lons, ring_lats)]
+    fixed = antimeridian.fix_polygon(
+        Polygon(coords), fix_winding=True, force_north_pole=north, force_south_pole=south
+    )
+    area_m2, _ = _GEOD.geometry_area_perimeter(fixed)
+    return mapping(fixed), abs(area_m2) / 1e6
