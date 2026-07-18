@@ -36,3 +36,36 @@ def destination(lat0, lon0, bearings, dists):
     )
     lon = np.mod(lon + np.pi, 2 * np.pi) - np.pi
     return np.degrees(lat), np.degrees(lon)
+
+
+def boundary_distances(d, alpha, n_bearings=1440, cap_deg=CAP_DEGREES, chunk=10000):
+    """Doubled-Voronoi cell boundary distance per compass bearing.
+
+    For each bearing theta, the spherical Voronoi bisector of peak i first
+    crosses the geodesic at rho = atan2(tan(d_i/2), cos(theta - alpha_i))
+    taken mod pi (Napier's rule; the bisector's closest approach to the
+    summit is d_i/2 along bearing alpha_i). The dominance-cell boundary is
+    min_i(2 * rho), capped just inside the antipode so the ring stays a
+    valid polygon. Peaks are processed in chunks to bound memory.
+
+    Returns (theta, R, idx): bearing grid, boundary distance (radians,
+    capped at cap_deg), and the index of the winning peak per bearing.
+    """
+    theta = np.linspace(0, 2 * np.pi, n_bearings, endpoint=False)
+    half = np.clip(d / 2, 1e-9, np.radians(89.9))
+    tan_half = np.tan(half)
+    best_rho = np.full(n_bearings, np.pi)
+    best_idx = np.zeros(n_bearings, dtype=np.int64)
+    rows = np.arange(n_bearings)
+    for start in range(0, len(d), chunk):
+        stop = start + chunk
+        rho = np.mod(
+            np.arctan2(tan_half[None, start:stop], np.cos(theta[:, None] - alpha[None, start:stop])),
+            np.pi,
+        )
+        local = np.argmin(rho, axis=1)
+        local_rho = rho[rows, local]
+        better = local_rho < best_rho
+        best_rho[better] = local_rho[better]
+        best_idx[better] = local[better] + start
+    return theta, np.minimum(2 * best_rho, np.radians(cap_deg)), best_idx
