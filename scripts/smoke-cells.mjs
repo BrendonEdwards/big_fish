@@ -8,12 +8,16 @@ const cacheDir = fileURLToPath(new URL('./.cache', import.meta.url));
 mkdirSync(cacheDir, { recursive: true });
 const PORT = 5199;
 const server = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: root, stdio: 'ignore' });
+let serverExited = false;
+server.on('exit', () => { serverExited = true; });
+server.on('error', () => { serverExited = true; });
 let browser;
 
 try {
   browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   for (let attempt = 0; ; attempt += 1) {
+    if (serverExited) throw new Error('dev server failed to start — is port 5199 in use?');
     try {
       await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'load' });
       break;
@@ -22,6 +26,8 @@ try {
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
   }
+  const title = await page.title();
+  if (!title.includes('Big Fish')) throw new Error(`port 5199 is serving something else: "${title}"`);
   await page.waitForFunction(() => window.__bigfish?.map?.isStyleLoaded?.(), null, { timeout: 30000 });
 
   await page.evaluate(() => window.__bigfish.selectSummit('kilimanjaro'));
