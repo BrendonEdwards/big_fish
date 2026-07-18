@@ -61,6 +61,7 @@ def boundary_distances(d, alpha, n_bearings=1440, cap_deg=CAP_DEGREES, chunk=100
     rows = np.arange(n_bearings)
     for start in range(0, len(d), chunk):
         stop = start + chunk
+        # mod pi is defensive only: arctan2 with positive tan_half already lands in (0, pi).
         rho = np.mod(
             np.arctan2(tan_half[None, start:stop], np.cos(theta[:, None] - alpha[None, start:stop])),
             np.pi,

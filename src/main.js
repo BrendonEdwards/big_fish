@@ -215,6 +215,7 @@ function applyIsolationFilter() {
 }
 
 function resetInfoPanel() {
+  overlayRequestToken += 1;
   activeSummitId = null;
   activePopup?.remove();
   map.getSource('voronoi-cell')?.setData(collection([]));
@@ -272,9 +273,6 @@ function lineString(coordinates, properties) {
   return { type: 'Feature', properties, geometry: { type: 'LineString', coordinates } };
 }
 
-function polygon(coordinates, properties) {
-  return { type: 'Feature', properties, geometry: { type: 'Polygon', coordinates } };
-}
 
 function collection(features) {
   return { type: 'FeatureCollection', features };

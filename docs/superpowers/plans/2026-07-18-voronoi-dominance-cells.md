@@ -12,6 +12,7 @@
 
 ## Global Constraints
 
+- NOTE (2026-07-18, post-audit): the GeoNames feature-code list and test counts below were superseded by the data-audit round — the spec is authoritative (codes PK/PKS/MT/VLC/HLL; stale-elevation guard; 15 Python tests).
 - Work happens in `~/Developer/big_fish` on branch `feature/voronoi-dominance-cells`.
 - Python binary: `/opt/homebrew/opt/python@3.12/bin/python3.12` (system `python3` is 3.9 — too old). Venv lives at `scripts/.venv`, never committed.
 - No new front-end runtime dependencies; `src/main.js` stays vanilla ES module, single quotes, 2-space indent, semicolons (match existing style).
