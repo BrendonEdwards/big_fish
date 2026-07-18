@@ -55,7 +55,7 @@ const peakData = [
   { id: 'agrihan', name: 'Agrihan High Point', elevationM: 965, latitude: 18.77, longitude: 145.67, isolationKm: 1902, nhn: { name: 'Mount Amagi', latitude: 34.86, longitude: 139.0 }, notes: 'Highest point in the Northern Mariana Islands.' },
   { id: 'kosciuszko', name: 'Mount Kosciuszko', elevationM: 2228, latitude: -36.4559, longitude: 148.2636, isolationKm: 1895, nhn: { name: 'Tutoko', latitude: -44.616, longitude: 168.005 }, notes: 'Highest mountain on mainland Australia.' },
   { id: 'olavtoppen', name: 'Olavtoppen', elevationM: 780, latitude: -54.42, longitude: 3.35, isolationKm: 1856, nhn: { name: 'Edinburgh Peak', latitude: -37.094, longitude: -12.283 }, notes: 'High point of Bouvet Island.' },
-  { id: 'mascarin', name: 'Mascarin Peak', elevationM: 1230, latitude: -21.09, longitude: 55.29, isolationKm: 1848, nhn: { name: 'Cockscomb', latitude: 16.77, longitude: -88.67 }, notes: 'Prominent summit on Réunion.' },
+  { id: 'mascarin', name: 'Mascarin Peak', elevationM: 1230, latitude: -46.8928, longitude: 37.7339, isolationKm: 1848, nhn: { name: 'Cockscomb', latitude: 16.77, longitude: -88.67 }, notes: 'Highest point of Marion Island.' },
   { id: 'green-mountain', name: 'Green Mountain', elevationM: 859, latitude: -7.95, longitude: -14.35, isolationKm: 1842, nhn: { name: 'Mount Richard-Molard', latitude: 8.543, longitude: -7.56 }, notes: 'High point of Ascension Island.' },
   { id: 'gora-narodnaya', name: 'Gora Narodnaya', elevationM: 1895, latitude: 65.033, longitude: 60.117, isolationKm: 1836, nhn: { name: 'Kattotjokka', latitude: 68.0, longitude: 18.5 }, notes: 'Highest summit of the Ural Mountains.' },
   { id: 'yushan', name: 'Yushan', elevationM: 3952, latitude: 23.47, longitude: 120.957, isolationKm: 1815, nhn: { name: 'Peak 4030', latitude: 23.47, longitude: 121.03 }, notes: 'Highest summit in Taiwan.' },
@@ -88,7 +88,29 @@ const nhnCollection = collection(summits.filter((summit) => summit.nhnCoordinate
   isolationKm: summit.isolationKm,
 })));
 const arcCollection = collection([]);
-const circleCollection = collection([]);
+
+const cellCache = new Map();
+let overlayRequestToken = 0;
+
+async function fetchCell(summitId) {
+  if (summitId === 'everest') return null;
+  if (!cellCache.has(summitId)) {
+    const request = (async () => {
+      // Production serves public/* at the site root; the dev server serves the repo root.
+      for (const base of ['/data/cells', '/public/data/cells']) {
+        const response = await fetch(`${base}/${summitId}.json`).catch(() => null);
+        if (response?.ok) return response.json();
+      }
+      throw new Error(`No cell data for ${summitId}`);
+    })().catch((error) => {
+      console.warn(error);
+      cellCache.delete(summitId);
+      return null;
+    });
+    cellCache.set(summitId, request);
+  }
+  return cellCache.get(summitId);
+}
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -111,19 +133,23 @@ map.on('load', () => {
   map.setProjection({ type: 'globe' });
   map.addSource('summits', { type: 'geojson', data: summitCollection, promoteId: 'id' });
   map.addSource('nhn-points', { type: 'geojson', data: nhnCollection });
-  map.addSource('isolation-circles', { type: 'geojson', data: circleCollection });
   map.addSource('summit-arcs', { type: 'geojson', data: arcCollection });
 
-  map.addLayer({ id: 'isolation-fill', type: 'fill', source: 'isolation-circles', paint: { 'fill-color': '#48b8ff', 'fill-opacity': 0.07 } });
-  map.addLayer({ id: 'isolation-outline', type: 'line', source: 'isolation-circles', paint: { 'line-color': '#48b8ff', 'line-width': 1.4, 'line-opacity': 0.85 } });
+  map.addSource('voronoi-cell', { type: 'geojson', data: collection([]) });
+  map.addSource('cell-peaks', { type: 'geojson', data: collection([]) });
+  map.addLayer({ id: 'voronoi-fill', type: 'fill', source: 'voronoi-cell', paint: { 'fill-color': '#48b8ff', 'fill-opacity': 0.08 } });
+  map.addLayer({ id: 'voronoi-outline', type: 'line', source: 'voronoi-cell', paint: { 'line-color': '#48b8ff', 'line-width': 1.4, 'line-opacity': 0.85 } });
   map.addLayer({ id: 'summit-arcs', type: 'line', source: 'summit-arcs', paint: { 'line-color': '#ffd166', 'line-width': 2, 'line-opacity': 0.86 } });
   map.addLayer({ id: 'nhn-points', type: 'circle', source: 'nhn-points', paint: { 'circle-color': '#b8f7ff', 'circle-radius': 5, 'circle-stroke-color': '#07324a', 'circle-stroke-width': 1.5 } });
+  map.addLayer({ id: 'cell-peaks', type: 'circle', source: 'cell-peaks', paint: { 'circle-color': '#ffb703', 'circle-radius': 4, 'circle-stroke-color': '#3a2500', 'circle-stroke-width': 1 } });
+  map.addLayer({ id: 'cell-peak-labels', type: 'symbol', source: 'cell-peaks', layout: { 'text-field': ['concat', ['get', 'name'], ' · ', ['to-string', ['get', 'elevationM']], ' m'], 'text-font': ['Noto Sans Regular'], 'text-size': 11, 'text-offset': [0, 1.1], 'text-anchor': 'top' }, paint: { 'text-color': '#ffe0a3', 'text-halo-color': '#07111f', 'text-halo-width': 1.1 } });
   map.addLayer({ id: 'summits', type: 'circle', source: 'summits', paint: { 'circle-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#ffd166', '#ff4d6d'], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 5, 8, 12], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 } });
   map.addLayer({ id: 'summit-labels', type: 'symbol', source: 'summits', layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 12, 'text-offset': [0, 1.4], 'text-anchor': 'top', 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#07111f', 'text-halo-width': 1.2 } });
 
   map.on('click', (event) => {
     const feature = getPrioritizedInteractiveFeature(event.point);
-    if (feature) selectSummit(feature.properties.summitId || feature.properties.id);
+    // promoteId moves a summit feature's id from properties.id to feature.id
+    if (feature) selectSummit(feature.properties.summitId ?? feature.id ?? feature.properties.id);
   });
 
   map.on('mousemove', (event) => {
@@ -133,6 +159,7 @@ map.on('load', () => {
   map.getCanvas().addEventListener('mouseleave', () => { map.getCanvas().style.cursor = ''; });
   bindIsolationFilter();
   applyIsolationFilter();
+  window.__bigfish = { map, selectSummit };
 });
 
 function selectSummit(summitId) {
@@ -154,9 +181,9 @@ function selectSummit(summitId) {
 }
 
 function getPrioritizedInteractiveFeature(point) {
-  const features = map.queryRenderedFeatures(point, { layers: ['summits', 'isolation-fill'] });
+  const features = map.queryRenderedFeatures(point, { layers: ['summits', 'voronoi-fill'] });
   return features.find((feature) => feature.layer.id === 'summits')
-    ?? features.find((feature) => feature.layer.id === 'isolation-fill')
+    ?? features.find((feature) => feature.layer.id === 'voronoi-fill')
     ?? null;
 }
 
@@ -176,6 +203,8 @@ function bindIsolationFilter() {
 }
 
 function applyIsolationFilter() {
+  // Filters evaluate against raw source properties, so ['get', 'id'] works here
+  // even though promoteId strips id from queryRenderedFeatures output.
   const filter = ['any', ['==', ['get', 'id'], 'everest'], ['>=', ['get', 'isolationKm'], minimumIsolationKm]];
   if (map.getLayer('summits')) map.setFilter('summits', filter);
   if (map.getLayer('summit-labels')) map.setFilter('summit-labels', filter);
@@ -189,9 +218,12 @@ function applyIsolationFilter() {
 }
 
 function resetInfoPanel() {
+  overlayRequestToken += 1;
   activeSummitId = null;
   activePopup?.remove();
-  map.getSource('isolation-circles')?.setData(collection([]));
+  map.getSource('voronoi-cell')?.setData(collection([]));
+  map.getSource('cell-peaks')?.setData(collection([]));
+  document.querySelector('#summit-computed').textContent = '—';
   map.getSource('summit-arcs')?.setData(collection([]));
   document.querySelector('#summit-name').textContent = 'Select a summit';
   document.querySelector('#summit-elevation').textContent = '—';
@@ -206,15 +238,26 @@ function isolationFromSlider(value) {
   return Math.round(isolation);
 }
 
-function updateSelectedOverlays(summit) {
-  const circleFeature = summit.isolationKm && summit.isolationKm < 10000
-    ? polygon([circle(summit.coordinates, summit.isolationKm)], { summitId: summit.id, name: `${summit.name} isolation`, isolationKm: summit.isolationKm })
-    : null;
+async function updateSelectedOverlays(summit) {
   const arcFeature = summit.nhnCoordinates
     ? lineString(greatCircle(summit.coordinates, summit.nhnCoordinates), { summitId: summit.id, name: `${summit.name} → ${summit.nhn}` })
     : null;
-  map.getSource('isolation-circles')?.setData(collection(circleFeature ? [circleFeature] : []));
   map.getSource('summit-arcs')?.setData(collection(arcFeature ? [arcFeature] : []));
+
+  const token = ++overlayRequestToken;
+  const cell = await fetchCell(summit.id);
+  if (token !== overlayRequestToken) return;
+  const polygons = cell?.features.filter((feature) => feature.geometry.type !== 'Point') ?? [];
+  const peaks = cell?.features.filter((feature) => feature.geometry.type === 'Point') ?? [];
+  map.getSource('voronoi-cell')?.setData(collection(polygons));
+  map.getSource('cell-peaks')?.setData(collection(peaks));
+  const computed = document.querySelector('#summit-computed');
+  if (polygons.length) {
+    const properties = polygons[0].properties;
+    computed.textContent = `${Math.round(properties.computedIsolationKm).toLocaleString()} km · ${properties.contributingPeakCount} shaping peaks`;
+  } else {
+    computed.textContent = summit.id === 'everest' ? 'No cell — nothing higher' : 'Unavailable';
+  }
 }
 
 function location(latitude, longitude) {
@@ -233,9 +276,6 @@ function lineString(coordinates, properties) {
   return { type: 'Feature', properties, geometry: { type: 'LineString', coordinates } };
 }
 
-function polygon(coordinates, properties) {
-  return { type: 'Feature', properties, geometry: { type: 'Polygon', coordinates } };
-}
 
 function collection(features) {
   return { type: 'FeatureCollection', features };
@@ -251,18 +291,6 @@ function greatCircle(start, end, steps = 96) {
     const b = Math.sin(fraction * omega) / Math.sin(omega);
     return vectorToLonLat(startVector.map((value, axis) => a * value + b * endVector[axis]));
   });
-}
-
-function circle(center, radiusKm, steps = 192) {
-  const [longitude, latitude] = center.map(toRadians);
-  const angularDistance = radiusKm / 6371.0088;
-  const ring = Array.from({ length: steps + 1 }, (_, index) => {
-    const bearing = (2 * Math.PI * index) / steps;
-    const lat = Math.asin(Math.sin(latitude) * Math.cos(angularDistance) + Math.cos(latitude) * Math.sin(angularDistance) * Math.cos(bearing));
-    const lon = longitude + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(latitude), Math.cos(angularDistance) - Math.sin(latitude) * Math.sin(lat));
-    return [wrapLongitude(toDegrees(lon)), toDegrees(lat)];
-  });
-  return ring;
 }
 
 function lonLatToVector([longitude, latitude]) {

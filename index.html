@@ -12,7 +12,7 @@
       <section class="hero" aria-label="Application title">
         <p class="eyebrow">Topographical isolation</p>
         <h1>Big Fish</h1>
-        <p>Explore high-prominence summits, their nearest higher neighbours, and the isolation circles that define them.</p>
+        <p>Explore high-prominence summits, their nearest higher neighbours, and the dominance cells that hem them in.</p>
       </section>
 
       <aside id="info-panel" class="info-panel" aria-live="polite">
@@ -21,13 +21,15 @@
           <div><dt>Elevation</dt><dd id="summit-elevation">—</dd></div>
           <div><dt>Nearest higher neighbour</dt><dd id="summit-nhn">—</dd></div>
           <div><dt>Isolation</dt><dd id="summit-isolation">—</dd></div>
+          <div><dt>Computed isolation</dt><dd id="summit-computed">—</dd></div>
         </dl>
         <label class="filter-control" for="isolation-filter">
           <span>Minimum isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
           <input id="isolation-filter" type="range" min="0" max="40075" step="50" value="0" />
         </label>
-        <p id="summit-notes">Click a peak marker or isolation circle to inspect map-native feature data.</p>
+        <p id="summit-notes">Click a peak marker or dominance cell to inspect map-native feature data.</p>
+        <p class="data-note">Dominance cells are derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
       </aside>
 
       <div id="map" aria-label="Interactive globe map"></div>

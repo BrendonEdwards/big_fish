@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server 5173",
-    "build": "node scripts/build-static-site.mjs"
+    "build": "node scripts/build-static-site.mjs",
+    "smoke": "node scripts/smoke-cells.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
   }
 }

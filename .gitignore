@@ -1,2 +1,5 @@
 dist/
 node_modules/
+scripts/.cache/
+scripts/.venv/
+scripts/__pycache__/
