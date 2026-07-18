@@ -73,31 +73,46 @@ For summit P:
    entry for P, which may differ from ours by a metre or two).
 2. One vectorized pass computes each q ∈ H's great-circle distance `d_q` and
    initial bearing `α_q` from P.
-3. The *frontier* of q is the great circle through q perpendicular to the
-   geodesic P→q — the spherical analogue of the doubled bisector (in the
-   plane, the ×2-scaled Voronoi edge passes through its generating peak).
-4. For 1,440 bearings θ, the first frontier crossing has closed form:
-   `r(θ, q) = atan2(tan(d_q), cos(θ − α_q))` mapped into (0°, 180°).
-   This is Napier's rule for right spherical triangles; the `atan2` branch
-   handles `d_q > 90°` (e.g. Aconcagua's higher ground at ~148° angular
-   distance) and bearings pointing away from q, which a scale-the-polygon
-   approach cannot.
-   - Numerical guard: `d_q` within ~0.01° of exactly 90° is clamped before
-     `tan()` blows up.
-5. `r(θ) = min over q` gives the boundary distance per bearing; the ring of
-   1,440 destination points (existing destination formula) is the cell.
-   `argmin` per bearing yields the contributing peaks.
+3. For each q, the spherical Voronoi *bisector* (the great circle equidistant
+   from P and q) has its closest approach to P at distance `d_q / 2` along
+   bearing `α_q`. Its first crossing along bearing θ has closed form
+   (Napier's rule): `ρ(θ, q) = atan2(tan(d_q / 2), cos(θ − α_q))` mapped
+   into (0°, 180°).
+4. For 1,440 bearings θ, the cell boundary is the *doubled* Voronoi radius:
+   `R(θ) = min(2 · min over q of ρ(θ, q), 179°)`. Doubling the bisector
+   radially about P is exactly the planar "×2-scaled Voronoi cell" whose
+   edges pass through their generating peaks, generalised to the sphere. The
+   179° cap (just inside the antipode) bounds directions with no higher
+   ground within half the antipodal distance — only near-pathological cells
+   (Aconcagua, whose only higher ground is ~148° away) hit it.
+
+   *Why not a great circle through q itself:* a great circle bounds both
+   directions — Tirich Mir's would also clip Aconcagua's cell at ~31° on the
+   far side, breaking the min-boundary-distance == isolation invariant. The
+   doubled-bisector form keeps both invariants everywhere.
+
+   - Numerical guard: `d_q / 2` is clamped below 89.9° before `tan()` (only
+     near-antipodal peaks are affected).
+5. The ring of 1,440 destination points (existing destination formula) is
+   the cell; `argmin` per bearing yields the contributing peaks.
 
 ### GeoJSON legality post-steps
 
 MapLibre (globe, `renderWorldCopies: false`) needs legal rings:
 
-- **Antimeridian:** unwrap ring longitudes to a continuous sequence, then
-  split at ±180° into a MultiPolygon where needed. Many of these cells cross
-  it (Pacific summits, Aconcagua's near-global cell).
-- **Poles:** when the ring encloses a pole (Vinson's cell contains the South
-  Pole), close the split rings along the ±180° edge down to the pole per the
-  standard GeoJSON pole-handling construction.
+- **Antimeridian:** split rings crossing ±180° into MultiPolygons using the
+  tried-and-tested `antimeridian` PyPI package (with `shapely`). Many of
+  these cells cross it (Pacific summits, Aconcagua's near-global cell).
+- **Poles:** because cells are star-shaped about the summit, pole containment
+  is exact and cheap: the north pole is inside iff `R(0°) > 90° − lat`, the
+  south pole iff `R(180°) > 90° + lat`. One pole inside → pass the matching
+  `force_north_pole`/`force_south_pole` flag to `antimeridian.fix_polygon`
+  (Vinson contains the South Pole). Both poles inside (near-global cells,
+  e.g. Aconcagua) → represent as the world rectangle minus the complement
+  blob (`shapely` difference), which yields a polygon with a hole.
+- Known rendering limit: MapLibre's mercator-based pipeline clips fills
+  beyond ±85.05° latitude even on the globe projection; polar slivers of
+  cells won't fill. Accepted.
 
 ## Validation (baked into the script)
 
