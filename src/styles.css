@@ -68,6 +68,9 @@ dd { margin: .1rem 0 0; color: #fff; }
 .mode-control { display: flex; gap: 1rem; border: 0; padding: 0; margin: 1rem 0 0; color: #c9d8e8; font-size: .8rem; }
 .mode-control input { accent-color: #48b8ff; }
 
+.terrain-control { display: block; margin-top: .5rem; color: #c9d8e8; font-size: .8rem; }
+.terrain-control input { accent-color: #48b8ff; }
+
 .rankings-button {
   margin-top: .75rem; width: 100%; padding: .5rem; border-radius: .6rem; cursor: pointer;
   border: 1px solid rgb(72 184 255 / 40%); background: rgb(72 184 255 / 12%); color: #8bd3ff; font-weight: 700;

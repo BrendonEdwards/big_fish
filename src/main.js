@@ -67,6 +67,33 @@ const filterableIsolationValues = peakData.map((peak) => peak.isolationKm).filte
 const minFilterIsolationKm = Math.min(...filterableIsolationValues);
 const maxFilterIsolationKm = Math.max(...filterableIsolationValues);
 
+function setTerrainEnabled(enabled) {
+  if (enabled) {
+    if (!map.getSource('terrain-dem')) {
+      map.addSource('terrain-dem', {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        tileSize: 256, encoding: 'terrarium', maxzoom: 13,
+        attribution: 'Terrain: Mapzen/AWS Open Data Terrain Tiles',
+      });
+    }
+    if (!map.getSource('hillshade-dem')) {
+      map.addSource('hillshade-dem', {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        tileSize: 256, encoding: 'terrarium', maxzoom: 13,
+      });
+    }
+    map.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 });
+    if (!map.getLayer('hillshade')) {
+      map.addLayer({ id: 'hillshade', type: 'hillshade', source: 'hillshade-dem', paint: { 'hillshade-exaggeration': 0.35 } }, 'ring-fill');
+    }
+  } else {
+    map.setTerrain(null);
+    if (map.getLayer('hillshade')) map.removeLayer('hillshade');
+  }
+}
+
 const summits = peakData.map((peak) => {
   const coordinates = location(peak.latitude, peak.longitude).coordinates;
   const nhnCoordinates = peak.nhn ? location(peak.nhn.latitude, peak.nhn.longitude).coordinates : null;
@@ -220,6 +247,8 @@ map.on('load', () => {
     radio.addEventListener('change', () => setDisplayMode(radio.value));
   }
 
+  document.querySelector('#terrain-toggle').addEventListener('change', (event) => setTerrainEnabled(event.target.checked));
+
   initRankings({
     getRows: () => summits.map((summit) => {
       const data = jailersData?.summits?.[summit.id];
@@ -242,7 +271,7 @@ map.on('load', () => {
     if (map.getLayer('spokes-core')) map.setPaintProperty('spokes-core', 'line-dasharray', dashSequence[dashStep]);
   }, 130);
 
-  window.__bigfish = { map, selectSummit, setDisplayMode };
+  window.__bigfish = { map, selectSummit, setDisplayMode, setTerrainEnabled };
 });
 
 function selectSummit(summitId) {
