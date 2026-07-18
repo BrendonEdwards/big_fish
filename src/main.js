@@ -140,6 +140,19 @@ function refreshOverlays() {
   map.getSource('jailer-points').setData(collection(visible ? jailerPointFeatures(active.id) : []));
 }
 
+function setDisplayMode(mode) {
+  displayMode = mode;
+  const web = mode === 'web';
+  map.setPaintProperty('spokes-core', 'line-opacity', web ? 0.25 : 0.9);
+  map.setPaintProperty('spokes-glow-inner', 'line-opacity', web ? 0.1 : 0.25);
+  map.setPaintProperty('spokes-glow-outer', 'line-opacity', web ? 0.04 : 0.1);
+  map.setLayoutProperty('jailer-points', 'visibility', web ? 'none' : 'visible');
+  map.setLayoutProperty('jailer-labels', 'visibility', web ? 'none' : 'visible');
+  map.setFilter('spokes-core-hover', ['==', ['get', 'summitId'], '']);
+  if (web) activePopup?.remove();
+  refreshOverlays();
+}
+
 const map = new maplibregl.Map({
   container: 'map',
   style: SATELLITE_STYLE,
@@ -190,12 +203,20 @@ map.on('load', () => {
   });
 
   map.on('mousemove', (event) => {
-    map.getCanvas().style.cursor = getPrioritizedInteractiveFeature(event.point) ? 'pointer' : '';
+    const feature = getPrioritizedInteractiveFeature(event.point);
+    map.getCanvas().style.cursor = feature ? 'pointer' : '';
+    if (displayMode !== 'web') return;
+    const summitFeature = map.queryRenderedFeatures(event.point, { layers: ['summits'] })[0];
+    map.setFilter('spokes-core-hover', ['==', ['get', 'summitId'], summitFeature?.id ?? '']);
   });
 
   map.getCanvas().addEventListener('mouseleave', () => { map.getCanvas().style.cursor = ''; });
   bindIsolationFilter();
   applyIsolationFilter();
+
+  for (const radio of document.querySelectorAll('input[name="display-mode"]')) {
+    radio.addEventListener('change', () => setDisplayMode(radio.value));
+  }
 
   const dashSequence = [
     [0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0],
@@ -206,7 +227,7 @@ map.on('load', () => {
     if (map.getLayer('spokes-core')) map.setPaintProperty('spokes-core', 'line-dasharray', dashSequence[dashStep]);
   }, 130);
 
-  window.__bigfish = { map, selectSummit };
+  window.__bigfish = { map, selectSummit, setDisplayMode };
 });
 
 function selectSummit(summitId) {
