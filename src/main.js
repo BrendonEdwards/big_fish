@@ -196,6 +196,16 @@ map.on('load', () => {
   map.getCanvas().addEventListener('mouseleave', () => { map.getCanvas().style.cursor = ''; });
   bindIsolationFilter();
   applyIsolationFilter();
+
+  const dashSequence = [
+    [0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0],
+  ];
+  let dashStep = 0;
+  window.setInterval(() => {
+    dashStep = (dashStep + 1) % dashSequence.length;
+    if (map.getLayer('spokes-core')) map.setPaintProperty('spokes-core', 'line-dasharray', dashSequence[dashStep]);
+  }, 130);
+
   window.__bigfish = { map, selectSummit };
 });
 
