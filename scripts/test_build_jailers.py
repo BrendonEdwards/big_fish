@@ -1,4 +1,4 @@
-from build_cells import parse_geonames_lines
+from build_jailers import parse_geonames_lines
 
 # GeoNames tab-separated columns: geonameid, name, asciiname, alternatenames,
 # lat, lon, feature class, feature code, country, cc2, admin1-4, population,
@@ -40,3 +40,40 @@ def test_parse_geonames_drops_areal_ranges_and_stale_elevations_but_keeps_missin
     assert lats.tolist() == [-78.525483]
     assert lons.tolist() == [-85.617147]
     assert elevs.tolist() == [4892]
+
+
+import numpy as np
+
+
+def test_build_summit_entry_synthetic():
+    from build_jailers import build_summit_entry
+
+    summit = {"id": "test", "name": "Test Summit", "elevationM": 1000,
+              "latitude": 0.0, "longitude": 0.0, "isolationKm": None, "nhn": None}
+    names = np.array(["North", "East", "South", "West", "Lowball"], dtype=object)
+    lats = np.array([10.0, 0.0, -12.0, 0.0, 5.0])
+    lons = np.array([0.0, 8.0, 0.0, -14.0, 5.0])  # East strictly nearest (8 deg)
+    elevs = np.array([2000, 2000, 2000, 2000, 500], dtype=np.int64)
+    entry, row = build_summit_entry(summit, names, lats, lons, elevs)
+    jailer_names = [j["name"] for j in entry["jailers"]]
+    assert set(jailer_names) == {"North", "East", "South", "West"}  # Lowball is not higher
+    bearings = [j["bearingDeg"] for j in entry["jailers"]]
+    assert bearings == sorted(bearings)                             # bearing-ordered
+    assert entry["nhn"]["name"] == "East"                           # 10 deg is the nearest higher
+    assert entry["isolationKmComputed"] == entry["nhn"]["distanceKm"]
+    assert entry["ring"] is not None and entry["ringAreaKm2"] > 1e6
+    assert entry["meanSpokeKm"] > 0
+    assert row["computed_iso"] == entry["isolationKmComputed"]
+
+
+def test_build_summit_entry_global_high_point():
+    from build_jailers import build_summit_entry
+
+    summit = {"id": "top", "name": "Top", "elevationM": 9000,
+              "latitude": 0.0, "longitude": 0.0, "isolationKm": None, "nhn": None}
+    names = np.array(["Lower"], dtype=object)
+    entry, row = build_summit_entry(
+        summit, names, np.array([10.0]), np.array([10.0]), np.array([500], dtype=np.int64)
+    )
+    assert entry is None
+    assert "global high point" in " ".join(row["flags"])

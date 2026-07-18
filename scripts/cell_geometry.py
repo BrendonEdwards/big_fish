@@ -142,19 +142,12 @@ def geodesic_points(lat1, lon1, lat2, lon2, step_km=200.0):
     return lats, lons
 
 
-def _ring_pole_inside(target_bearing_deg, bearings_deg, dists_km, pole_dist_deg):
-    """Star-shaped pole test for a bearing-ordered vertex polygon: linearly
-    interpolate the boundary distance (in bearing space, wrapping) at the
-    pole's bearing and compare with the pole's distance from the hub."""
-    order = np.argsort(bearings_deg)
-    bearings = np.asarray(bearings_deg)[order]
-    dist_deg = np.degrees(np.asarray(dists_km)[order] / EARTH_RADIUS_KM)
-    nxt = int(np.searchsorted(bearings, target_bearing_deg) % len(bearings))
-    prev = (nxt - 1) % len(bearings)
-    span = (bearings[nxt] - bearings[prev]) % 360.0 or 360.0
-    t = ((target_bearing_deg - bearings[prev]) % 360.0) / span
-    boundary = dist_deg[prev] * (1 - t) + dist_deg[nxt] * t
-    return bool(boundary > pole_dist_deg)
+def _ring_winding(ring_lons):
+    """Net revolutions of a closed ring's longitudes around the polar axis:
+    +/-1 means the ring encloses exactly one pole, 0 means none."""
+    deltas = np.diff(np.asarray(ring_lons))
+    deltas = (deltas + 180.0) % 360.0 - 180.0
+    return int(round(deltas.sum() / 360.0))
 
 
 def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg, jailer_dists_km, step_km=200.0):
@@ -174,9 +167,10 @@ def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg,
         ring_lons.extend(seg_lons[:-1])
     ring_lats.append(ring_lats[0])
     ring_lons.append(ring_lons[0])
-    north = _ring_pole_inside(0.0, jailer_bearings_deg, jailer_dists_km, 90.0 - hub_lat)
-    south = _ring_pole_inside(180.0, jailer_bearings_deg, jailer_dists_km, 90.0 + hub_lat)
-    assert not (north and south), "jailer ring cannot contain both poles"
+    winding = _ring_winding(ring_lons)
+    assert abs(winding) <= 1, "simple jailer ring cannot wind more than once"
+    north = winding != 0 and float(np.mean(ring_lats)) > 0
+    south = winding != 0 and not north
     coords = [(round(lon, 3), round(lat, 3)) for lon, lat in zip(ring_lons, ring_lats)]
     fixed = antimeridian.fix_polygon(
         Polygon(coords), fix_winding=True, force_north_pole=north, force_south_pole=south

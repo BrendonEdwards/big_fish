@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 // Vendors the Noto Sans Regular glyph PBF ranges needed by every label the
 // app can render (summit names, contributing-peak names, elevation text).
@@ -11,10 +11,10 @@ const outDir = new URL('../public/fonts/Noto Sans Regular/', import.meta.url);
 const src = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 const peaks = new Function(`return ${src.match(/const peakData = (\[[\s\S]*?\n\]);/)[1]};`)();
 let text = peaks.map((peak) => peak.name).join('') + '0123456789 ·m';
-const cellsDir = new URL('../public/data/cells/', import.meta.url);
-for (const file of readdirSync(cellsDir)) {
-  const fc = JSON.parse(readFileSync(new URL(file, cellsDir), 'utf8'));
-  for (const feature of fc.features) if (feature.properties.name) text += feature.properties.name;
+const jailersPath = new URL('../public/data/jailers.json', import.meta.url);
+const jailersData = JSON.parse(readFileSync(jailersPath, 'utf8'));
+for (const entry of Object.values(jailersData.summits)) {
+  for (const jailer of entry.jailers) text += jailer.name;
 }
 
 const ranges = new Set([0]);

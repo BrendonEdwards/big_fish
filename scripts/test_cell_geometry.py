@@ -150,7 +150,7 @@ def test_geometry_both_poles_world_with_hole():
 
 import pytest
 
-from cell_geometry import geodesic_points, jailer_ring
+from cell_geometry import angular_distance_and_bearing, geodesic_points, jailer_ring
 
 
 def test_geodesic_points_endpoints_and_spacing():
@@ -218,10 +218,20 @@ def test_jailer_ring_containing_south_pole():
     assert area > 1.5e6
 
 
-def test_jailer_ring_rejects_both_poles():
-    lats = np.array([60.0, -60.0, 60.0, -60.0])
-    lons = np.array([120.0, 150.0, -120.0, -150.0])
-    bearings = np.array([45.0, 135.0, 315.0, 225.0])
-    dists = np.full(4, np.radians(100.0)) * 6371.0088
-    with pytest.raises(AssertionError):
-        jailer_ring(0.0, 0.0, lats, lons, bearings, dists)
+def test_jailer_ring_narrow_cluster_far_side():
+    from shapely.geometry import Point, shape
+
+    # Aconcagua-like: every jailer in a narrow bearing arc on the far side of
+    # the planet — the "ring" is a blob over the cluster, not a hub loop.
+    hub_lat, hub_lon = -32.65, -70.01
+    lats = np.array([30.0, 35.0, 28.0, 36.0])
+    lons = np.array([75.0, 82.0, 88.0, 95.0])
+    d, alpha = angular_distance_and_bearing(hub_lat, hub_lon, lats, lons)
+    geometry, area = jailer_ring(
+        hub_lat, hub_lon, lats, lons, np.degrees(alpha), d * 6371.0088
+    )
+    geom = shape(geometry)
+    assert geom.is_valid
+    assert geom.contains(Point(83.0, 32.0))
+    assert not geom.contains(Point(-70.01, -32.65))
+    assert area < 5.0e6

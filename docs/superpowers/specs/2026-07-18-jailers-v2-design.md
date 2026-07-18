@@ -74,9 +74,10 @@ stale-elevation guard, per-summit exclusions) and the same
 
 - Ring construction: jailer vertices in bearing order, each edge densified
   along the geodesic (~1 vertex per 200 km), longitudes handled by
-  `antimeridian.fix_polygon` (poles: same star-shaped containment test as
-  v1, using vertex bearings/distances; a ring cannot reach the antipode so
-  the both-poles world-difference case cannot occur — assert that).
+  `antimeridian.fix_polygon` (poles: longitude-winding test on the densified
+  ring (±1 revolution ⇔ encloses exactly one pole, hemisphere chosen by mean
+  vertex latitude; 0 ⇔ none — narrow-arc jailer clusters like Aconcagua's
+  produce winding-0 blobs over the cluster that need no pole handling).
 - Area: `pyproj.Geod(ellps="WGS84").geometry_area_perimeter` on the fixed
   ring (absolute value, km²). New venv dependency: `pyproj`.
 - Everest: no entry. `< 3` jailers: `ring`/`ringAreaKm2` null, spokes still
