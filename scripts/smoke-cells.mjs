@@ -66,26 +66,20 @@ try {
   const rendered = await page.evaluate(() => window.__bigfish.map.queryRenderedFeatures({ layers: ['summits'] }).length);
   if (rendered < 3) throw new Error(`expected summit markers rendered at world view, got ${rendered}`);
 
-  // Real click on Kilimanjaro's marker selects it and loads its cell
+  // Real click on Kilimanjaro's marker selects it and loads its spokes
   await clickSummitMarker(page, 'kilimanjaro', [37.36, -3.07]);
   await expectPanel(page, 'Kilimanjaro');
   await page.waitForFunction(
-    () => (window.__bigfish.map.getSource('voronoi-cell')?._data?.features?.length ?? 0) > 0,
+    () => (window.__bigfish.map.getSource('jailer-spokes')?._data?.features?.length ?? 0) > 0,
     null, { timeout: 15000 },
   );
   const selected = await page.evaluate(() =>
     window.__bigfish.map.getFeatureState({ source: 'summits', id: 'kilimanjaro' }).selected ?? false);
   if (!selected) throw new Error('kilimanjaro not marked selected after marker click');
-  const peakCount = await page.evaluate(() => window.__bigfish.map.getSource('cell-peaks')._data.features.length);
+  const peakCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-points')._data.features.length);
   if (peakCount < 1) throw new Error('expected contributing peaks for Kilimanjaro');
   const computedText = await page.textContent('#summit-computed');
   if (!/km/.test(computedText)) throw new Error(`unexpected computed isolation text: ${computedText}`);
-
-  // Clicking elsewhere inside the cell fill keeps the summit selected
-  await page.mouse.click(1000, 250);
-  await page.waitForTimeout(800);
-  const panelAfterCellClick = await page.textContent('#summit-name');
-  if (panelAfterCellClick !== 'Kilimanjaro') throw new Error(`cell-fill click changed selection to "${panelAfterCellClick}"`);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${cacheDir}/smoke-kilimanjaro.png` });
 
@@ -109,15 +103,15 @@ try {
   });
   await page.waitForTimeout(1000);
 
-  // Real click on Everest's marker: selectable, but no cell
+  // Real click on Everest's marker: selectable, but no jailers
   await clickSummitMarker(page, 'everest', [86.93, 27.99]);
   await expectPanel(page, 'Mount Everest');
   await page.waitForFunction(
-    () => document.querySelector('#summit-computed').textContent.includes('No cell'),
+    () => document.querySelector('#summit-computed').textContent.includes('No jailers'),
     null, { timeout: 15000 },
   );
-  const cellCount = await page.evaluate(() => window.__bigfish.map.getSource('voronoi-cell')._data.features.length);
-  if (cellCount !== 0) throw new Error('expected empty cell source for Everest');
+  const cellCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
+  if (cellCount !== 0) throw new Error('expected empty spokes source for Everest');
 
   console.log(`SMOKE PASS (${baseUrl ? 'remote: ' + baseUrl : 'local dev server'})`);
 } finally {

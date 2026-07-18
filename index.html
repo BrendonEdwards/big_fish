@@ -12,7 +12,7 @@
       <section class="hero" aria-label="Application title">
         <p class="eyebrow">Topographical isolation</p>
         <h1>Big Fish</h1>
-        <p>Explore high-prominence summits, their nearest higher neighbours, and the dominance cells that hem them in.</p>
+        <p>Explore high-prominence summits, the jailers that hem them in, and the spokes that measure their isolation.</p>
       </section>
 
       <aside id="info-panel" class="info-panel" aria-live="polite">
@@ -22,14 +22,17 @@
           <div><dt>Nearest higher neighbour</dt><dd id="summit-nhn">—</dd></div>
           <div><dt>Isolation</dt><dd id="summit-isolation">—</dd></div>
           <div><dt>Computed isolation</dt><dd id="summit-computed">—</dd></div>
+          <div><dt>Ring area</dt><dd id="summit-area">—</dd></div>
+          <div><dt>Mean spoke</dt><dd id="summit-mean-spoke">—</dd></div>
         </dl>
+        <div id="jailer-chips" aria-label="Jailers by distance"></div>
         <label class="filter-control" for="isolation-filter">
           <span>Minimum isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
           <input id="isolation-filter" type="range" min="0" max="40075" step="50" value="0" />
         </label>
-        <p id="summit-notes">Click a peak marker or dominance cell to inspect map-native feature data.</p>
-        <p class="data-note">Dominance cells are derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
+        <p id="summit-notes">Click a peak marker to see its ring of jailers.</p>
+        <p class="data-note">Jailer data derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
       </aside>
 
       <div id="map" aria-label="Interactive globe map"></div>
