@@ -1,6 +1,7 @@
 import numpy as np
+from shapely.geometry import Point, shape
 
-from cell_geometry import angular_distance_and_bearing, destination, CAP_DEGREES, boundary_distances
+from cell_geometry import angular_distance_and_bearing, destination, CAP_DEGREES, boundary_distances, cell_ring, poles_inside, ring_to_geojson_geometry
 
 
 def test_angular_distance_and_bearing_cardinal_points():
@@ -70,3 +71,67 @@ def test_boundary_isolation_invariant_random_field():
     plat, plon = destination(10.0, 20.0, alpha[nearest : nearest + 1], d[nearest : nearest + 1])
     gap, _ = angular_distance_and_bearing(float(blat[0]), float(blon[0]), plat, plon)
     assert gap[0] <= np.radians(0.5)                   # nearest higher peak lies on the boundary
+
+
+def _cell(lat0, lon0, d, alpha):
+    theta, R, _ = boundary_distances(d, alpha)
+    north, south = poles_inside(lat0, theta, R)
+    lats, lons = cell_ring(lat0, lon0, theta, R)
+    return ring_to_geojson_geometry(lats, lons, north, south)
+
+
+def test_poles_inside_star_shaped_tests():
+    theta = np.linspace(0, 2 * np.pi, 1440, endpoint=False)
+    assert poles_inside(0.0, theta, np.full(1440, np.radians(100.0))) == (True, True)
+    assert poles_inside(0.0, theta, np.full(1440, np.radians(80.0))) == (False, False)
+    lopsided = np.full(1440, np.radians(80.0))
+    lopsided[:5] = np.radians(95.0)  # bearing ~0° reaches past the north pole
+    assert poles_inside(0.0, theta, lopsided) == (True, False)
+
+
+def test_cell_ring_drops_consecutive_duplicates():
+    theta, R, _ = boundary_distances(np.array([np.radians(20.0)]), np.array([0.0]))
+    lats, lons = cell_ring(0.0, 0.0, theta, R)
+    pairs = list(zip(lats.tolist(), lons.tolist()))
+    assert all(a != b for a, b in zip(pairs, pairs[1:]))
+
+
+def test_geometry_simple_cell_is_valid_polygon():
+    rng = np.random.default_rng(3)
+    alpha = rng.uniform(0, 2 * np.pi, 24)
+    d = np.full(24, np.radians(10.0))
+    geometry = _cell(0.0, 0.0, d, alpha)
+    geom = shape(geometry)
+    assert geometry["type"] == "Polygon" and geom.is_valid
+    assert -11 < geom.bounds[0] and geom.bounds[2] < 11
+
+
+def test_geometry_antimeridian_cell_splits():
+    rng = np.random.default_rng(4)
+    alpha = rng.uniform(0, 2 * np.pi, 24)
+    d = np.full(24, np.radians(5.0))
+    geometry = _cell(0.0, 179.5, d, alpha)
+    geom = shape(geometry)
+    assert geometry["type"] == "MultiPolygon" and geom.is_valid
+    assert geom.bounds[0] >= -180 and geom.bounds[2] <= 180
+
+
+def test_geometry_south_pole_cell():
+    rng = np.random.default_rng(5)
+    alpha = rng.uniform(0, 2 * np.pi, 24)
+    d = np.full(24, np.radians(5.0))
+    geometry = _cell(-89.0, 0.0, d, alpha)
+    geom = shape(geometry)
+    assert geom.is_valid
+    assert geom.bounds[1] == -90.0  # ring closed through the south pole
+
+
+def test_geometry_both_poles_world_with_hole():
+    # Single higher peak due east: cap engaged on the far side, both poles inside.
+    geometry = _cell(0.0, 0.0, np.array([np.radians(40.0)]), np.array([np.pi / 2]))
+    geom = shape(geometry)
+    assert geom.is_valid
+    # shapely Point takes (lon, lat)
+    assert geom.contains(Point(-30.0, 0.0))      # west of the summit: inside
+    assert geom.contains(Point(-100.0, 0.0))     # far west: inside (far side capped at 179°)
+    assert not geom.contains(Point(60.0, 0.0))   # beyond the eastern frontier: outside

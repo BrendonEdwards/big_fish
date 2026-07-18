@@ -4,6 +4,8 @@ All angles internal to this module are radians; public inputs/outputs use
 degrees for coordinates, radians for distances/bearings unless noted.
 """
 import numpy as np
+import antimeridian
+from shapely.geometry import Polygon, box, mapping
 
 EARTH_RADIUS_KM = 6371.0088
 CAP_DEGREES = 179.0
@@ -69,3 +71,41 @@ def boundary_distances(d, alpha, n_bearings=1440, cap_deg=CAP_DEGREES, chunk=100
         best_rho[better] = local_rho[better]
         best_idx[better] = local[better] + start
     return theta, np.minimum(2 * best_rho, np.radians(cap_deg)), best_idx
+
+
+def cell_ring(lat0, lon0, theta, R):
+    """Ring vertices (degrees, 3-decimal rounded, consecutive dups dropped)."""
+    lats, lons = destination(lat0, lon0, theta, R)
+    lats, lons = np.round(lats, 3), np.round(lons, 3)
+    keep = np.ones(len(lats), dtype=bool)
+    keep[1:] = (np.diff(lats) != 0) | (np.diff(lons) != 0)
+    return lats[keep], lons[keep]
+
+
+def poles_inside(lat0, theta, R):
+    """Exact pole containment for a ring star-shaped about the summit:
+    the geodesic at bearing 0 runs straight to the north pole (bearing pi
+    to the south pole), so compare the boundary distance there with the
+    summit's colatitude."""
+    north = R[int(np.argmin(np.abs(theta)))] > np.radians(90.0 - lat0)
+    south = R[int(np.argmin(np.abs(theta - np.pi)))] > np.radians(90.0 + lat0)
+    return bool(north), bool(south)
+
+
+def ring_to_geojson_geometry(lats, lons, north_pole, south_pole):
+    """GeoJSON geometry for the ring: antimeridian-split, pole-safe.
+
+    Both poles inside means a near-global cell; represent it as the world
+    rectangle minus the complement blob (the same ring, reversed, is the
+    boundary of the excluded region around the summit's antipode).
+    """
+    coords = list(zip(lons.tolist(), lats.tolist()))
+    coords.append(coords[0])
+    if north_pole and south_pole:
+        blob = antimeridian.fix_polygon(Polygon(coords[::-1]))
+        return mapping(box(-180.0, -90.0, 180.0, 90.0).difference(blob))
+    return mapping(
+        antimeridian.fix_polygon(
+            Polygon(coords), force_north_pole=north_pole, force_south_pole=south_pole
+        )
+    )
