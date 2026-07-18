@@ -154,10 +154,8 @@ try {
     () => document.querySelector('#summit-computed').textContent.includes('No jailers'),
     null, { timeout: 15000 },
   );
-  const cellCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
-  if (cellCount !== 0) throw new Error('expected empty spokes source for Everest');
-  const everestSpokes = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
-  if (everestSpokes !== 0) throw new Error('expected no spokes for Everest');
+  const spokeCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
+  if (spokeCount !== 0) throw new Error('expected empty spokes source for Everest');
 
   console.log(`SMOKE PASS (${baseUrl ? 'remote: ' + baseUrl : 'local dev server'})`);
 } finally {

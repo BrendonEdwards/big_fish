@@ -113,6 +113,7 @@ const summitCollection = collection(summits.map((summit) => point(summit.coordin
 
 let jailersData = null;
 let displayMode = 'selected';
+let hoveredWebSummitId = '';
 let maximumIsolationKm = Infinity;
 
 async function loadJailersData() {
@@ -178,6 +179,7 @@ function setDisplayMode(mode) {
   map.setLayoutProperty('jailer-points', 'visibility', web ? 'none' : 'visible');
   map.setLayoutProperty('jailer-labels', 'visibility', web ? 'none' : 'visible');
   map.setFilter('spokes-core-hover', ['==', ['get', 'summitId'], '']);
+  hoveredWebSummitId = '';
   if (web) activePopup?.remove();
   refreshOverlays();
 }
@@ -235,8 +237,12 @@ map.on('load', () => {
     const feature = getPrioritizedInteractiveFeature(event.point);
     map.getCanvas().style.cursor = feature ? 'pointer' : '';
     if (displayMode !== 'web') return;
-    const summitFeature = map.queryRenderedFeatures(event.point, { layers: ['summits'] })[0];
-    map.setFilter('spokes-core-hover', ['==', ['get', 'summitId'], summitFeature?.id ?? '']);
+    const hovered = map.queryRenderedFeatures(event.point, { layers: ['summits', 'spokes-core'] })[0];
+    const summitId = hovered?.id ?? hovered?.properties?.summitId ?? '';
+    if (summitId === hoveredWebSummitId) return;
+    hoveredWebSummitId = summitId;
+    map.setFilter('spokes-core-hover', ['==', ['get', 'summitId'], summitId]);
+    map.setPaintProperty('spokes-core', 'line-opacity', summitId ? 0.08 : 0.25);
   });
 
   map.getCanvas().addEventListener('mouseleave', () => { map.getCanvas().style.cursor = ''; });
@@ -276,7 +282,7 @@ map.on('load', () => {
 
 function selectSummit(summitId) {
   const summit = summits.find(({ id }) => id === summitId);
-  if (!summit || (summit.id !== 'everest' && summit.isolationKm < minimumIsolationKm)) return;
+  if (!summit || !summitPassesFilter(summit)) return;
   activeSummitId = summit.id;
   for (const { id } of summits) map.setFeatureState({ source: 'summits', id }, { selected: id === summit.id });
   document.querySelector('#summit-name').textContent = summit.name;
