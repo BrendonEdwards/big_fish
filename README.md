@@ -17,6 +17,28 @@ npm run dev
 
 The 40 summit positions are the Wikipedia Topographic isolation table entries, with researched WGS84 latitude/longitude values and converted in code to GeoJSON `[longitude, latitude]` arrays. See `docs/coordinates.md` for the coordinate audit trail.
 
+## Dominance cells
+
+Clicking a summit shows its dominance cell: the doubled spherical-Voronoi
+polygon whose boundary passes through the higher peaks that hem the summit
+in. The cell's minimum boundary distance is the summit's isolation, and the
+boundary touches the nearest higher neighbour. Cells are precomputed from
+the GeoNames catalogue (peaks/mountains/volcanoes/hills with elevations; range/group features and stale elevations filtered out) —
+coverage is thinnest near sea level, so low summits' cells reflect the
+nearest higher *catalogued* peak. See
+`docs/superpowers/specs/2026-07-18-voronoi-dominance-cells-design.md`.
+
+To regenerate `public/data/cells/` (one-time ~400 MB GeoNames download,
+cached in `scripts/.cache/`):
+
+    /opt/homebrew/opt/python@3.12/bin/python3.12 -m venv scripts/.venv
+    scripts/.venv/bin/pip install numpy shapely antimeridian pytest
+    node scripts/export-summits.mjs
+    scripts/.venv/bin/python scripts/build_cells.py
+
+Validation report: `scripts/cell-report.md`. Tests:
+`scripts/.venv/bin/pytest scripts/ -q` and `npm run smoke`.
+
 ## Token and tile configuration
 
 The default style in `src/main.js` uses Esri World Imagery tiles and does not require a token. If you switch to Mapbox satellite tiles, set a Vercel environment variable such as `VITE_MAPBOX_TOKEN` and update the raster tile URL in `SATELLITE_STYLE` to include it. Keep client-side map tokens URL-restricted to your production domain and localhost development origins.
