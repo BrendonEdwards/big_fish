@@ -1,3 +1,5 @@
+import { initRankings } from './rankings.js';
+
 const MAX_TILE_ZOOM = 19;
 const SATELLITE_STYLE = {
   version: 8,
@@ -217,6 +219,19 @@ map.on('load', () => {
   for (const radio of document.querySelectorAll('input[name="display-mode"]')) {
     radio.addEventListener('change', () => setDisplayMode(radio.value));
   }
+
+  initRankings({
+    getRows: () => summits.map((summit) => {
+      const data = jailersData?.summits?.[summit.id];
+      return {
+        id: summit.id, name: summit.name, isolationKm: summit.isolationKm,
+        ringAreaKm2: data?.ringAreaKm2 ?? null,
+        jailerCount: data ? data.jailers.length : null,
+        meanSpokeKm: data?.meanSpokeKm ?? null,
+      };
+    }),
+    onSelect: (id) => selectSummit(id),
+  });
 
   const dashSequence = [
     [0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0],

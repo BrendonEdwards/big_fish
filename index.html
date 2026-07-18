@@ -30,6 +30,7 @@
           <label><input type="radio" name="display-mode" value="selected" checked /> Selected</label>
           <label><input type="radio" name="display-mode" value="web" /> Web</label>
         </fieldset>
+        <button id="open-rankings" type="button" class="rankings-button">Rankings</button>
         <label class="filter-control" for="isolation-filter">
           <span>Min isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
@@ -45,6 +46,23 @@
       </aside>
 
       <div id="map" aria-label="Interactive globe map"></div>
+      <dialog id="rankings-dialog" aria-label="Summit rankings">
+        <h2>Rankings</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Summit</th>
+                <th data-metric="ringAreaKm2" class="active">Ring area (km²)</th>
+                <th data-metric="jailerCount">Jailers</th>
+                <th data-metric="meanSpokeKm">Mean spoke (km)</th>
+                <th data-metric="isolationKm">Isolation (km)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </dialog>
     </main>
     <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
     <script type="module" src="/src/main.js"></script>
