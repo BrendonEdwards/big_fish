@@ -95,6 +95,17 @@ def test_cell_ring_drops_consecutive_duplicates():
     pairs = list(zip(lats.tolist(), lons.tolist()))
     assert all(a != b for a, b in zip(pairs, pairs[1:]))
 
+    # The single-peak case above happens to produce zero raw duplicates, so
+    # it wouldn't fail if the dedup mask were deleted. Force a genuine
+    # collision: 1440 points all within ~0.005 degrees of the antipode round
+    # to far fewer distinct 3-decimal coordinates.
+    theta_dense = np.linspace(0, 2 * np.pi, 1440, endpoint=False)
+    R_dense = np.full(1440, np.radians(179.995))
+    lats2, lons2 = cell_ring(0.0, 0.0, theta_dense, R_dense)
+    pairs2 = list(zip(lats2.tolist(), lons2.tolist()))
+    assert all(a != b for a, b in zip(pairs2, pairs2[1:]))
+    assert len(lats2) < len(theta_dense)
+
 
 def test_geometry_simple_cell_is_valid_polygon():
     rng = np.random.default_rng(3)

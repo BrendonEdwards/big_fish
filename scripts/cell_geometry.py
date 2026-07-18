@@ -96,16 +96,21 @@ def ring_to_geojson_geometry(lats, lons, north_pole, south_pole):
     """GeoJSON geometry for the ring: antimeridian-split, pole-safe.
 
     Both poles inside means a near-global cell; represent it as the world
-    rectangle minus the complement blob (the same ring, reversed, is the
-    boundary of the excluded region around the summit's antipode).
+    rectangle minus the complement blob. The ring (a closed boundary that is
+    star-shaped about the summit) also bounds the excluded blob around the
+    summit's antipode as-is; fix_polygon normalizes winding itself, so no
+    explicit reversal of the coordinates is needed here.
     """
     coords = list(zip(lons.tolist(), lats.tolist()))
     coords.append(coords[0])
     if north_pole and south_pole:
-        blob = antimeridian.fix_polygon(Polygon(coords[::-1]))
+        blob = antimeridian.fix_polygon(Polygon(coords))
         return mapping(box(-180.0, -90.0, 180.0, 90.0).difference(blob))
     return mapping(
         antimeridian.fix_polygon(
-            Polygon(coords), force_north_pole=north_pole, force_south_pole=south_pole
+            Polygon(coords),
+            force_north_pole=north_pole,
+            force_south_pole=south_pole,
+            fix_winding=True,
         )
     )
