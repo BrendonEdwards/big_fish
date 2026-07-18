@@ -40,10 +40,18 @@ Two pieces, cleanly separated:
    - Downloads and caches the GeoNames `allCountries` dump (~400 MB zip,
      cached under `scripts/.cache/`, never committed).
    - Filters to mountain-type features with elevations: feature class `T`,
-     feature codes `PK, PKS, MT, MTS, VLC, HLL, HLLS`. Use the `elevation`
-     column, falling back to the `dem` (SRTM) column when empty. Hills are
-     included because the lowest summit (Joe's Hill, 13 m) competes with
-     hills, not mountains.
+     feature codes `PK, PKS, MT, VLC, HLL`. Use the `elevation` column,
+     falling back to the `dem` (SRTM) column when empty. Hills are included
+     because the lowest summit (Joe's Hill, 13 m) competes with hills, not
+     mountains. `MTS` and `HLLS` (areal range/group centroids) were dropped
+     after a data-quality audit found they catalogue whole ranges as a
+     single point with unreliable elevations (e.g. "Sentinel Range" 5140 m,
+     "Alborz Mountains" 5671 m) that were beating real summits.
+   - Also rejects a candidate whenever its elevation sits more than 1000 m
+     above its own `dem` column (when `dem` is available and positive) — a
+     stale-elevation guard that catches point features with bogus elevations
+     regardless of feature code (e.g. "Cerro Pariamachay", elev 6759 m vs.
+     dem 4758 m).
    - For each of the 40 summits in `src/main.js`, computes the doubled cell
      and writes `public/data/cells/<id>.json`.
 2. **`src/main.js` changes** — on summit click, lazily `fetch` the summit's
@@ -135,6 +143,10 @@ warning on relative mismatch > 10 %. Expected honest discrepancies:
   listed as Puʻu Kī, Hawaiʻi at 1,903 km; Bermuda→Hawaiʻi is ~7,500 km). The
   report surfaces these; we keep Wikipedia's numbers in the info panel and
   label the cell as dataset-derived.
+- A 2026-07-18 data audit found `mascarin`'s stored coordinates pointed at
+  Réunion instead of Marion Island, collapsing its computed isolation to
+  ~8.5 km against hundreds of genuinely higher Réunion peaks; corrected in
+  `src/main.js` (see `docs/coordinates.md`).
 
 The report is informational — the build fails only on the hard assertions
 above, not on Wikipedia mismatches.

@@ -19,3 +19,24 @@ def test_parse_geonames_filters_to_elevated_mountain_features():
     assert lats.tolist() == [10.5, -5.0, 32.25]
     assert lons.tolist() == [20.5, 30.0, -64.85]
     assert elevs.tolist() == [3000, 1500, 14]  # Dem Mountain fell back to the dem column
+
+
+# Areal range/group centroid (MTS) with an otherwise-valid elevation, a
+# feature-coded PK point with a stale/bogus elevation far above its dem
+# (the Sentinel Range / Alborz Mountains defect pattern that collapsed
+# Vinson's and Elbrus's computed isolation), and a real Antarctic PK point
+# with no SRTM coverage (dem sentinel -9999) that the stale-elevation guard
+# must not reject.
+STALE_AND_AREAL_FIXTURE = [
+    "7\tRamapo Mountains\tRamapo Mountains\t\t41.0\t-74.3\tT\tMTS\tUS\t\t\t\t\t\t0\t500\t495\tAmerica/New_York\t2024-01-01",
+    "8\tSentinel Range\tSentinel Range\t\t-78.16667\t-85.5\tT\tPK\tAQ\t\t\t\t\t\t0\t5140\t1485\tAntarctica/Casey\t2024-01-01",
+    "9\tVinson Massif\tVinson Massif\t\t-78.525483\t-85.617147\tT\tPK\tAQ\t\t\t\t\t\t0\t4892\t-9999\tAntarctica/Casey\t2024-01-01",
+]
+
+
+def test_parse_geonames_drops_areal_ranges_and_stale_elevations_but_keeps_missing_dem():
+    names, lats, lons, elevs = parse_geonames_lines(STALE_AND_AREAL_FIXTURE)
+    assert names.tolist() == ["Vinson Massif"]
+    assert lats.tolist() == [-78.525483]
+    assert lons.tolist() == [-85.617147]
+    assert elevs.tolist() == [4892]
