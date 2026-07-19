@@ -1,3 +1,5 @@
+import { initRankings } from './rankings.js';
+
 const MAX_TILE_ZOOM = 19;
 const SATELLITE_STYLE = {
   version: 8,
@@ -51,7 +53,7 @@ const peakData = [
   { id: 'mawson', name: 'Mawson Peak', elevationM: 2745, latitude: -53.106, longitude: 73.514, isolationKm: 1922, nhn: { name: 'Mount McMaster', latitude: -53.1, longitude: 73.45 }, notes: 'High point of Heard Island.' },
   { id: 'mitchell', name: 'Mount Mitchell', elevationM: 2037, latitude: 35.7647, longitude: -82.2653, isolationKm: 1913, nhn: { name: 'Lone Butte', latitude: 40.6, longitude: -111.7 }, notes: 'Highest summit in the eastern United States.' },
   { id: 'kerinci', name: 'Gunung Kerinci', elevationM: 3805, latitude: -1.697, longitude: 101.264, isolationKm: 1905, nhn: { name: 'Gunung Kinabalu', latitude: 6.075, longitude: 116.558611 }, notes: 'Highest volcano in Indonesia.' },
-  { id: 'joes-hill', name: 'Joe\'s Hill', elevationM: 13, latitude: 32.25, longitude: -64.85, isolationKm: 1903, nhn: { name: 'Puu Ki', latitude: 20.0, longitude: -155.7 }, notes: 'High point of Bermuda.' },
+  { id: 'joes-hill', name: 'Joe\'s Hill', elevationM: 13, latitude: 1.8177, longitude: -157.3124, isolationKm: 1903, nhn: { name: 'Puu Ki', latitude: 20.0, longitude: -155.7 }, notes: 'High point of Kiritimati, the world\'s largest coral atoll.' },
   { id: 'agrihan', name: 'Agrihan High Point', elevationM: 965, latitude: 18.77, longitude: 145.67, isolationKm: 1902, nhn: { name: 'Mount Amagi', latitude: 34.86, longitude: 139.0 }, notes: 'Highest point in the Northern Mariana Islands.' },
   { id: 'kosciuszko', name: 'Mount Kosciuszko', elevationM: 2228, latitude: -36.4559, longitude: 148.2636, isolationKm: 1895, nhn: { name: 'Tutoko', latitude: -44.616, longitude: 168.005 }, notes: 'Highest mountain on mainland Australia.' },
   { id: 'olavtoppen', name: 'Olavtoppen', elevationM: 780, latitude: -54.42, longitude: 3.35, isolationKm: 1856, nhn: { name: 'Edinburgh Peak', latitude: -37.094, longitude: -12.283 }, notes: 'High point of Bouvet Island.' },
@@ -64,6 +66,33 @@ const peakData = [
 const filterableIsolationValues = peakData.map((peak) => peak.isolationKm).filter(Number.isFinite);
 const minFilterIsolationKm = Math.min(...filterableIsolationValues);
 const maxFilterIsolationKm = Math.max(...filterableIsolationValues);
+
+function setTerrainEnabled(enabled) {
+  if (enabled) {
+    if (!map.getSource('terrain-dem')) {
+      map.addSource('terrain-dem', {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        tileSize: 256, encoding: 'terrarium', maxzoom: 13,
+        attribution: 'Terrain: Mapzen/AWS Open Data Terrain Tiles',
+      });
+    }
+    if (!map.getSource('hillshade-dem')) {
+      map.addSource('hillshade-dem', {
+        type: 'raster-dem',
+        tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+        tileSize: 256, encoding: 'terrarium', maxzoom: 13,
+      });
+    }
+    map.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 });
+    if (!map.getLayer('hillshade')) {
+      map.addLayer({ id: 'hillshade', type: 'hillshade', source: 'hillshade-dem', paint: { 'hillshade-exaggeration': 0.35 } }, 'ring-fill');
+    }
+  } else {
+    map.setTerrain(null);
+    if (map.getLayer('hillshade')) map.removeLayer('hillshade');
+  }
+}
 
 const summits = peakData.map((peak) => {
   const coordinates = location(peak.latitude, peak.longitude).coordinates;
@@ -81,35 +110,78 @@ const summits = peakData.map((peak) => {
 });
 
 const summitCollection = collection(summits.map((summit) => point(summit.coordinates, summit, summit.id)));
-const nhnCollection = collection(summits.filter((summit) => summit.nhnCoordinates).map((summit) => point(summit.nhnCoordinates, {
-  summitId: summit.id,
-  name: summit.nhn,
-  relatedSummit: summit.name,
-  isolationKm: summit.isolationKm,
-})));
-const arcCollection = collection([]);
 
-const cellCache = new Map();
-let overlayRequestToken = 0;
+let jailersData = null;
+let displayMode = 'selected';
+let hoveredWebSummitId = '';
+let maximumIsolationKm = Infinity;
 
-async function fetchCell(summitId) {
-  if (summitId === 'everest') return null;
-  if (!cellCache.has(summitId)) {
-    const request = (async () => {
-      // Production serves public/* at the site root; the dev server serves the repo root.
-      for (const base of ['/data/cells', '/public/data/cells']) {
-        const response = await fetch(`${base}/${summitId}.json`).catch(() => null);
-        if (response?.ok) return response.json();
-      }
-      throw new Error(`No cell data for ${summitId}`);
-    })().catch((error) => {
-      console.warn(error);
-      cellCache.delete(summitId);
-      return null;
-    });
-    cellCache.set(summitId, request);
+async function loadJailersData() {
+  // Production serves public/* at the site root; the dev server serves the repo root.
+  for (const base of ['/data', '/public/data']) {
+    const response = await fetch(`${base}/jailers.json`).catch(() => null);
+    if (response?.ok) return response.json();
   }
-  return cellCache.get(summitId);
+  console.warn('jailers.json unavailable — spokes and rings disabled');
+  return null;
+}
+
+function spokeFeatures(summitId) {
+  const summit = summits.find((entry) => entry.id === summitId);
+  const data = jailersData?.summits?.[summitId];
+  if (!summit || !data) return [];
+  return data.jailers.map((jailer) => lineString(greatCircle(summit.coordinates, jailer.coordinates), {
+    summitId,
+    name: jailer.name,
+    distanceKm: jailer.distanceKm,
+    isNhn: jailer.name === data.nhn.name && jailer.distanceKm === data.nhn.distanceKm,
+  }));
+}
+
+function jailerPointFeatures(summitId) {
+  const data = jailersData?.summits?.[summitId];
+  if (!data) return [];
+  return data.jailers.map((jailer) => point(jailer.coordinates, {
+    summitId, name: jailer.name, elevationM: jailer.elevationM, distanceKm: jailer.distanceKm,
+  }));
+}
+
+function summitPassesFilter(summit) {
+  if (summit.id === 'everest') return true;
+  return summit.isolationKm >= minimumIsolationKm && summit.isolationKm <= maximumIsolationKm;
+}
+
+function refreshOverlays() {
+  if (!map.getSource('jailer-spokes')) return;
+  if (displayMode === 'web') {
+    const features = summits.filter(summitPassesFilter).flatMap((summit) => spokeFeatures(summit.id));
+    map.getSource('jailer-spokes').setData(collection(features));
+    map.getSource('jailer-ring').setData(collection([]));
+    map.getSource('jailer-points').setData(collection([]));
+    return;
+  }
+  const active = summits.find((summit) => summit.id === activeSummitId);
+  const visible = active && summitPassesFilter(active);
+  map.getSource('jailer-spokes').setData(collection(visible ? spokeFeatures(active.id) : []));
+  const data = visible ? jailersData?.summits?.[active.id] : null;
+  map.getSource('jailer-ring').setData(collection(
+    data?.ring ? [{ type: 'Feature', properties: { summitId: active.id }, geometry: data.ring }] : [],
+  ));
+  map.getSource('jailer-points').setData(collection(visible ? jailerPointFeatures(active.id) : []));
+}
+
+function setDisplayMode(mode) {
+  displayMode = mode;
+  const web = mode === 'web';
+  map.setPaintProperty('spokes-core', 'line-opacity', web ? 0.25 : 0.9);
+  map.setPaintProperty('spokes-glow-inner', 'line-opacity', web ? 0.1 : 0.25);
+  map.setPaintProperty('spokes-glow-outer', 'line-opacity', web ? 0.04 : 0.1);
+  map.setLayoutProperty('jailer-points', 'visibility', web ? 'none' : 'visible');
+  map.setLayoutProperty('jailer-labels', 'visibility', web ? 'none' : 'visible');
+  map.setFilter('spokes-core-hover', ['==', ['get', 'summitId'], '']);
+  hoveredWebSummitId = '';
+  if (web) activePopup?.remove();
+  refreshOverlays();
 }
 
 const map = new maplibregl.Map({
@@ -132,19 +204,28 @@ let minimumIsolationKm = 0;
 map.on('load', () => {
   map.setProjection({ type: 'globe' });
   map.addSource('summits', { type: 'geojson', data: summitCollection, promoteId: 'id' });
-  map.addSource('nhn-points', { type: 'geojson', data: nhnCollection });
-  map.addSource('summit-arcs', { type: 'geojson', data: arcCollection });
 
-  map.addSource('voronoi-cell', { type: 'geojson', data: collection([]) });
-  map.addSource('cell-peaks', { type: 'geojson', data: collection([]) });
-  map.addLayer({ id: 'voronoi-fill', type: 'fill', source: 'voronoi-cell', paint: { 'fill-color': '#48b8ff', 'fill-opacity': 0.08 } });
-  map.addLayer({ id: 'voronoi-outline', type: 'line', source: 'voronoi-cell', paint: { 'line-color': '#48b8ff', 'line-width': 1.4, 'line-opacity': 0.85 } });
-  map.addLayer({ id: 'summit-arcs', type: 'line', source: 'summit-arcs', paint: { 'line-color': '#ffd166', 'line-width': 2, 'line-opacity': 0.86 } });
-  map.addLayer({ id: 'nhn-points', type: 'circle', source: 'nhn-points', paint: { 'circle-color': '#b8f7ff', 'circle-radius': 5, 'circle-stroke-color': '#07324a', 'circle-stroke-width': 1.5 } });
-  map.addLayer({ id: 'cell-peaks', type: 'circle', source: 'cell-peaks', paint: { 'circle-color': '#ffb703', 'circle-radius': 4, 'circle-stroke-color': '#3a2500', 'circle-stroke-width': 1 } });
-  map.addLayer({ id: 'cell-peak-labels', type: 'symbol', source: 'cell-peaks', layout: { 'text-field': ['concat', ['get', 'name'], ' · ', ['to-string', ['get', 'elevationM']], ' m'], 'text-font': ['Noto Sans Regular'], 'text-size': 11, 'text-offset': [0, 1.1], 'text-anchor': 'top' }, paint: { 'text-color': '#ffe0a3', 'text-halo-color': '#07111f', 'text-halo-width': 1.1 } });
+  map.addSource('jailer-spokes', { type: 'geojson', data: collection([]) });
+  map.addSource('jailer-ring', { type: 'geojson', data: collection([]) });
+  map.addSource('jailer-points', { type: 'geojson', data: collection([]) });
+  const spokeColor = ['interpolate', ['linear'], ['get', 'distanceKm'], 1500, '#ffb703', 6000, '#8ecae6', 12000, '#48b8ff'];
+  map.addLayer({ id: 'ring-fill', type: 'fill', source: 'jailer-ring', paint: { 'fill-color': '#48b8ff', 'fill-opacity': 0.06 } });
+  map.addLayer({ id: 'ring-outline', type: 'line', source: 'jailer-ring', paint: { 'line-color': '#48b8ff', 'line-width': 1.2, 'line-opacity': 0.7 } });
+  map.addLayer({ id: 'spokes-glow-outer', type: 'line', source: 'jailer-spokes', layout: { 'line-cap': 'round' }, paint: { 'line-color': spokeColor, 'line-width': 10, 'line-opacity': 0.1, 'line-blur': 6 } });
+  map.addLayer({ id: 'spokes-glow-inner', type: 'line', source: 'jailer-spokes', layout: { 'line-cap': 'round' }, paint: { 'line-color': spokeColor, 'line-width': 4.5, 'line-opacity': 0.25, 'line-blur': 2.5 } });
+  map.addLayer({ id: 'spokes-core', type: 'line', source: 'jailer-spokes', layout: { 'line-cap': 'round' }, paint: { 'line-color': spokeColor, 'line-width': ['case', ['get', 'isNhn'], 3, 1.6], 'line-opacity': 0.9 } });
+  map.addLayer({ id: 'spokes-core-hover', type: 'line', source: 'jailer-spokes', layout: { 'line-cap': 'round' }, filter: ['==', ['get', 'summitId'], ''], paint: { 'line-color': spokeColor, 'line-width': ['case', ['get', 'isNhn'], 4, 2.6], 'line-opacity': 1 } });
+  map.addLayer({ id: 'jailer-points', type: 'circle', source: 'jailer-points', paint: { 'circle-color': '#ffb703', 'circle-radius': 4, 'circle-stroke-color': '#3a2500', 'circle-stroke-width': 1 } });
+  map.addLayer({ id: 'jailer-labels', type: 'symbol', source: 'jailer-points', layout: { 'text-field': ['concat', ['get', 'name'], ' · ', ['to-string', ['get', 'elevationM']], ' m'], 'text-font': ['Noto Sans Regular'], 'text-size': 11, 'text-offset': [0, 1.1], 'text-anchor': 'top' }, paint: { 'text-color': '#ffe0a3', 'text-halo-color': '#07111f', 'text-halo-width': 1.1 } });
   map.addLayer({ id: 'summits', type: 'circle', source: 'summits', paint: { 'circle-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#ffd166', '#ff4d6d'], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 5, 8, 12], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 } });
   map.addLayer({ id: 'summit-labels', type: 'symbol', source: 'summits', layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 12, 'text-offset': [0, 1.4], 'text-anchor': 'top', 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#07111f', 'text-halo-width': 1.2 } });
+
+  loadJailersData().then((data) => {
+    jailersData = data;
+    refreshOverlays();
+    const active = summits.find((summit) => summit.id === activeSummitId);
+    if (active) renderJailerDetails(active);
+  });
 
   map.on('click', (event) => {
     const feature = getPrioritizedInteractiveFeature(event.point);
@@ -153,23 +234,59 @@ map.on('load', () => {
   });
 
   map.on('mousemove', (event) => {
-    map.getCanvas().style.cursor = getPrioritizedInteractiveFeature(event.point) ? 'pointer' : '';
+    const feature = getPrioritizedInteractiveFeature(event.point);
+    map.getCanvas().style.cursor = feature ? 'pointer' : '';
+    if (displayMode !== 'web') return;
+    const hovered = map.queryRenderedFeatures(event.point, { layers: ['summits', 'spokes-core'] })[0];
+    const summitId = hovered?.id ?? hovered?.properties?.summitId ?? '';
+    if (summitId === hoveredWebSummitId) return;
+    hoveredWebSummitId = summitId;
+    map.setFilter('spokes-core-hover', ['==', ['get', 'summitId'], summitId]);
+    map.setPaintProperty('spokes-core', 'line-opacity', summitId ? 0.08 : 0.25);
   });
 
   map.getCanvas().addEventListener('mouseleave', () => { map.getCanvas().style.cursor = ''; });
   bindIsolationFilter();
   applyIsolationFilter();
-  window.__bigfish = { map, selectSummit };
+
+  for (const radio of document.querySelectorAll('input[name="display-mode"]')) {
+    radio.addEventListener('change', () => setDisplayMode(radio.value));
+  }
+
+  document.querySelector('#terrain-toggle').addEventListener('change', (event) => setTerrainEnabled(event.target.checked));
+
+  initRankings({
+    getRows: () => summits.map((summit) => {
+      const data = jailersData?.summits?.[summit.id];
+      return {
+        id: summit.id, name: summit.name, isolationKm: summit.isolationKm,
+        ringAreaKm2: data?.ringAreaKm2 ?? null,
+        jailerCount: data ? data.jailers.length : null,
+        meanSpokeKm: data?.meanSpokeKm ?? null,
+      };
+    }),
+    onSelect: (id) => selectSummit(id),
+  });
+
+  const dashSequence = [
+    [0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0],
+  ];
+  let dashStep = 0;
+  window.setInterval(() => {
+    dashStep = (dashStep + 1) % dashSequence.length;
+    if (map.getLayer('spokes-core')) map.setPaintProperty('spokes-core', 'line-dasharray', dashSequence[dashStep]);
+  }, 130);
+
+  window.__bigfish = { map, selectSummit, setDisplayMode, setTerrainEnabled };
 });
 
 function selectSummit(summitId) {
   const summit = summits.find(({ id }) => id === summitId);
-  if (!summit || (summit.id !== 'everest' && summit.isolationKm < minimumIsolationKm)) return;
+  if (!summit || !summitPassesFilter(summit)) return;
   activeSummitId = summit.id;
   for (const { id } of summits) map.setFeatureState({ source: 'summits', id }, { selected: id === summit.id });
   document.querySelector('#summit-name').textContent = summit.name;
   document.querySelector('#summit-elevation').textContent = `${summit.elevationM.toLocaleString()} m`;
-  document.querySelector('#summit-nhn').textContent = summit.nhn ?? 'None — global high point';
   document.querySelector('#summit-isolation').textContent = summit.isolationKm ? `${summit.isolationKm.toLocaleString()} km` : 'Global high point';
   document.querySelector('#summit-notes').textContent = summit.notes;
   updateSelectedOverlays(summit);
@@ -181,23 +298,36 @@ function selectSummit(summitId) {
 }
 
 function getPrioritizedInteractiveFeature(point) {
-  const features = map.queryRenderedFeatures(point, { layers: ['summits', 'voronoi-fill'] });
+  const features = map.queryRenderedFeatures(point, { layers: ['summits', 'ring-fill'] });
   return features.find((feature) => feature.layer.id === 'summits')
-    ?? features.find((feature) => feature.layer.id === 'voronoi-fill')
+    ?? features.find((feature) => feature.layer.id === 'ring-fill')
     ?? null;
 }
 
 function bindIsolationFilter() {
-  const slider = document.querySelector('#isolation-filter');
-  const value = document.querySelector('#isolation-filter-value');
-  slider.min = '0';
-  slider.max = '1000';
-  slider.value = '0';
+  const minSlider = document.querySelector('#isolation-filter');
+  const maxSlider = document.querySelector('#isolation-filter-max');
+  const minValue = document.querySelector('#isolation-filter-value');
+  const maxValue = document.querySelector('#isolation-filter-max-value');
   minimumIsolationKm = minFilterIsolationKm;
-  value.textContent = `${minimumIsolationKm.toLocaleString()} km`;
-  slider.addEventListener('input', () => {
-    minimumIsolationKm = isolationFromSlider(Number(slider.value));
-    value.textContent = `${minimumIsolationKm.toLocaleString()} km`;
+  maximumIsolationKm = maxFilterIsolationKm;
+  const render = () => {
+    minValue.textContent = `${minimumIsolationKm.toLocaleString()} km`;
+    maxValue.textContent = `${maximumIsolationKm.toLocaleString()} km`;
+  };
+  render();
+  minSlider.addEventListener('input', () => {
+    if (Number(minSlider.value) > Number(maxSlider.value)) maxSlider.value = minSlider.value;
+    minimumIsolationKm = isolationFromSlider(Number(minSlider.value));
+    maximumIsolationKm = isolationFromSlider(Number(maxSlider.value));
+    render();
+    applyIsolationFilter();
+  });
+  maxSlider.addEventListener('input', () => {
+    if (Number(maxSlider.value) < Number(minSlider.value)) minSlider.value = maxSlider.value;
+    minimumIsolationKm = isolationFromSlider(Number(minSlider.value));
+    maximumIsolationKm = isolationFromSlider(Number(maxSlider.value));
+    render();
     applyIsolationFilter();
   });
 }
@@ -205,26 +335,31 @@ function bindIsolationFilter() {
 function applyIsolationFilter() {
   // Filters evaluate against raw source properties, so ['get', 'id'] works here
   // even though promoteId strips id from queryRenderedFeatures output.
-  const filter = ['any', ['==', ['get', 'id'], 'everest'], ['>=', ['get', 'isolationKm'], minimumIsolationKm]];
+  const filter = ['any', ['==', ['get', 'id'], 'everest'], ['all',
+    ['>=', ['get', 'isolationKm'], minimumIsolationKm],
+    ['<=', ['get', 'isolationKm'], maximumIsolationKm],
+  ]];
   if (map.getLayer('summits')) map.setFilter('summits', filter);
   if (map.getLayer('summit-labels')) map.setFilter('summit-labels', filter);
-  if (map.getLayer('nhn-points')) map.setFilter('nhn-points', ['>=', ['get', 'isolationKm'], minimumIsolationKm]);
   const active = summits.find((summit) => summit.id === activeSummitId);
-  if (!active || active.isolationKm < minimumIsolationKm) {
-    const replacement = summits.find((summit) => summit.id === 'everest') ?? summits.find((summit) => summit.isolationKm >= minimumIsolationKm);
+  if (!active || !summitPassesFilter(active)) {
+    const replacement = summits.find((summit) => summit.id === 'everest') ?? summits.find(summitPassesFilter);
     if (replacement) selectSummit(replacement.id);
     else resetInfoPanel();
   }
+  refreshOverlays();
 }
 
 function resetInfoPanel() {
-  overlayRequestToken += 1;
   activeSummitId = null;
   activePopup?.remove();
-  map.getSource('voronoi-cell')?.setData(collection([]));
-  map.getSource('cell-peaks')?.setData(collection([]));
+  map.getSource('jailer-spokes')?.setData(collection([]));
+  map.getSource('jailer-ring')?.setData(collection([]));
+  map.getSource('jailer-points')?.setData(collection([]));
   document.querySelector('#summit-computed').textContent = '—';
-  map.getSource('summit-arcs')?.setData(collection([]));
+  document.querySelector('#summit-area').textContent = '—';
+  document.querySelector('#summit-mean-spoke').textContent = '—';
+  document.querySelector('#jailer-chips').replaceChildren();
   document.querySelector('#summit-name').textContent = 'Select a summit';
   document.querySelector('#summit-elevation').textContent = '—';
   document.querySelector('#summit-nhn').textContent = '—';
@@ -238,25 +373,30 @@ function isolationFromSlider(value) {
   return Math.round(isolation);
 }
 
-async function updateSelectedOverlays(summit) {
-  const arcFeature = summit.nhnCoordinates
-    ? lineString(greatCircle(summit.coordinates, summit.nhnCoordinates), { summitId: summit.id, name: `${summit.name} → ${summit.nhn}` })
-    : null;
-  map.getSource('summit-arcs')?.setData(collection(arcFeature ? [arcFeature] : []));
+function updateSelectedOverlays(summit) {
+  refreshOverlays();
+  renderJailerDetails(summit);
+}
 
-  const token = ++overlayRequestToken;
-  const cell = await fetchCell(summit.id);
-  if (token !== overlayRequestToken) return;
-  const polygons = cell?.features.filter((feature) => feature.geometry.type !== 'Point') ?? [];
-  const peaks = cell?.features.filter((feature) => feature.geometry.type === 'Point') ?? [];
-  map.getSource('voronoi-cell')?.setData(collection(polygons));
-  map.getSource('cell-peaks')?.setData(collection(peaks));
+function renderJailerDetails(summit) {
+  const data = jailersData?.summits?.[summit.id];
   const computed = document.querySelector('#summit-computed');
-  if (polygons.length) {
-    const properties = polygons[0].properties;
-    computed.textContent = `${Math.round(properties.computedIsolationKm).toLocaleString()} km · ${properties.contributingPeakCount} shaping peaks`;
-  } else {
-    computed.textContent = summit.id === 'everest' ? 'No cell — nothing higher' : 'Unavailable';
+  if (jailersData === null) computed.textContent = 'Jailer data unavailable';
+  else if (!data) computed.textContent = 'No jailers — nothing higher';
+  else computed.textContent = `${Math.round(data.isolationKmComputed).toLocaleString()} km · ${data.jailers.length} jailers`;
+  document.querySelector('#summit-nhn').textContent = data ? `${data.nhn.name} (${data.nhn.elevationM.toLocaleString()} m)` : (summit.id === 'everest' ? 'None — global high point' : summit.nhn ?? '—');
+  document.querySelector('#summit-area').textContent = data?.ringAreaKm2 ? `${Math.round(data.ringAreaKm2).toLocaleString()} km²` : '—';
+  document.querySelector('#summit-mean-spoke').textContent = data ? `${Math.round(data.meanSpokeKm).toLocaleString()} km` : '—';
+  const chips = document.querySelector('#jailer-chips');
+  chips.replaceChildren();
+  if (!data) return;
+  for (const jailer of [...data.jailers].sort((a, b) => a.distanceKm - b.distanceKm)) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'jailer-chip';
+    chip.textContent = `${jailer.name} · ${jailer.elevationM.toLocaleString()} m · ${Math.round(jailer.distanceKm).toLocaleString()} km`;
+    chip.addEventListener('click', () => map.flyTo({ center: jailer.coordinates, zoom: 6 }));
+    chips.append(chip);
   }
 }
 

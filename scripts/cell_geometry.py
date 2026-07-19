@@ -115,3 +115,65 @@ def ring_to_geojson_geometry(lats, lons, north_pole, south_pole):
             fix_winding=True,
         )
     )
+
+
+def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg, jailer_dists_km, step_deg=0.5):
+    """Ring-of-jailers polygon: jailer vertices in bearing order, edges swept
+    by interpolating bearing and distance from the hub (star-shaped by
+    construction, so the ring can never self-intersect; the boundary between
+    two jailers never dips below the nearer one's distance, so min boundary
+    distance stays >= the isolation, touching it at the NHN vertex).
+    Returns (geojson geometry dict, area_km2) or (None, None) for < 3 jailers."""
+    if len(jailer_lats) < 3:
+        return None, None
+    order = np.argsort(jailer_bearings_deg)
+    bearings = np.asarray(jailer_bearings_deg, dtype=float)[order]
+    dists = np.asarray(jailer_dists_km, dtype=float)[order] / EARTH_RADIUS_KM
+    theta_parts, r_parts = [], []
+    n = len(bearings)
+    for i in range(n):
+        j = (i + 1) % n
+        gap = (bearings[j] - bearings[i]) % 360.0
+        if gap == 0.0:
+            # Exact tie (two jailers at the same bearing, different
+            # distances): a legitimate radial jump, not a sweep to fill.
+            # Emit a single zero-width sample; the next segment starts the
+            # sweep onward from bearings[j] == bearings[i].
+            theta_parts.append(np.radians([bearings[i]]))
+            r_parts.append(np.asarray([dists[i]]))
+            continue
+        steps = max(1, int(np.ceil(gap / step_deg)))
+        t = np.arange(steps) / steps
+        theta_parts.append(np.radians(bearings[i] + gap * t))
+        r_parts.append(dists[i] * (1 - t) + dists[j] * t)
+    theta = np.concatenate(theta_parts)
+    R = np.concatenate(r_parts)
+    # Spherical integral (piecewise-linear radius profile sampled at 0.5°; sub-0.1% accuracy)
+    # of the hub-side region of a star-shaped ring:
+    # A = R_earth^2 * integral over theta of (1 - cos R(theta)) dtheta.
+    # Uniform for every case — normal rings, pole-containing rings, and the
+    # both-poles world-with-hole case — with no geodesic-library edge cases.
+    dtheta = np.diff(np.concatenate([theta, [theta[0] + 2.0 * np.pi]]))
+    # A zero-width step at a tied bearing (see gap == 0.0 above) is a
+    # legitimate radial jump — its area contribution is 0 either way — so
+    # the sweep only needs to be non-decreasing, not strictly increasing;
+    # the closing wrap still guarantees the full 360-degree sweep.
+    assert np.all(dtheta >= 0), "ring bearing sweep must be non-decreasing"
+    area_km2 = float(EARTH_RADIUS_KM ** 2 * np.sum((1.0 - np.cos(R)) * dtheta))
+    lats, lons = cell_ring(hub_lat, hub_lon, theta, R)
+    north, south = poles_inside(hub_lat, np.mod(theta, 2 * np.pi), R)
+    if north and south:
+        # Near-circular ring around the hub's antipode: represent directly as
+        # the world rectangle with the ring as a hole — no heuristics needed.
+        span = float(np.max(lons) - np.min(lons))
+        assert span < 350.0, "antipodal blob crossing the antimeridian is not supported"
+        hole = list(zip(lons.tolist(), lats.tolist()))
+        hole.append(hole[0])
+        shell = [(-180.0, -90.0), (180.0, -90.0), (180.0, 90.0), (-180.0, 90.0), (-180.0, -90.0)]
+        geometry = mapping(Polygon(shell, holes=[hole]))
+    else:
+        geometry = ring_to_geojson_geometry(lats, lons, north, south)
+    from shapely.geometry import shape
+    geom = shape(geometry)
+    assert geom.is_valid, "jailer ring must be a valid polygon"
+    return geometry, area_km2

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Build dominance-cell GeoJSON for every summit in the app.
+"""Build jailer spokes/ring data (jailers.json) for every summit in the app.
 
 Run offline by a developer (never by CI):
 
     node scripts/export-summits.mjs
-    scripts/.venv/bin/python scripts/build_cells.py
+    scripts/.venv/bin/python scripts/build_jailers.py
 
 Downloads and caches the GeoNames allCountries dump (~400 MB, first run
-only), then writes public/data/cells/<id>.json per summit plus a
-validation report at scripts/cell-report.md.
+only), then writes public/data/jailers.json (per-summit jailer entries)
+plus a validation report at scripts/jailers-report.md.
 """
 import io
 import json
@@ -20,7 +20,6 @@ import numpy as np
 
 SCRIPTS = Path(__file__).resolve().parent
 CACHE = SCRIPTS / ".cache"
-OUTPUT = SCRIPTS.parent / "public" / "data" / "cells"
 GEONAMES_URL = "https://download.geonames.org/export/dump/allCountries.zip"
 FEATURE_CODES = {"PK", "PKS", "MT", "VLC", "HLL"}
 SELF_EXCLUSION_KM = 2.0
@@ -98,8 +97,15 @@ def load_geonames(cache_dir):
         return parse_geonames_lines(io.TextIOWrapper(fh, encoding="utf-8"))
 
 
-def build_cell(summit, names, lats, lons, elevs):
-    """Return (feature_collection | None, report_row) for one summit."""
+def build_summit_entry(summit, names, lats, lons, elevs):
+    """Return (jailers.json entry | None, report_row) for one summit."""
+    from cell_geometry import (
+        EARTH_RADIUS_KM,
+        angular_distance_and_bearing,
+        boundary_distances,
+        jailer_ring,
+    )
+
     higher = elevs > summit["elevationM"]
     row = {
         "id": summit["id"],
@@ -108,22 +114,13 @@ def build_cell(summit, names, lats, lons, elevs):
         "wiki_nhn": (summit.get("nhn") or {}).get("name"),
         "computed_iso": None,
         "computed_nhn": None,
-        "contributing": 0,
+        "jailer_count": 0,
+        "ring_area_km2": None,
         "flags": [],
     }
     if not higher.any():
-        row["flags"].append("global high point — no cell")
+        row["flags"].append("global high point — no jailers")
         return None, row
-
-    from cell_geometry import (
-        EARTH_RADIUS_KM,
-        angular_distance_and_bearing,
-        boundary_distances,
-        cell_ring,
-        destination,
-        poles_inside,
-        ring_to_geojson_geometry,
-    )
 
     lat0, lon0 = summit["latitude"], summit["longitude"]
     d, alpha = angular_distance_and_bearing(lat0, lon0, lats[higher], lons[higher])
@@ -132,94 +129,83 @@ def build_cell(summit, names, lats, lons, elevs):
     d, alpha = d[keep], alpha[keep]
     names_h = names[higher][keep]
     lats_h, lons_h = lats[higher][keep], lons[higher][keep]
+    elevs_h = elevs[higher][keep]
     if len(d) == 0:
         row["flags"].append("no catalogued higher peaks beyond exclusion radius")
         return None, row
 
     theta, R, idx = boundary_distances(d, alpha)
-    nearest = int(np.argmin(d))
-    computed_iso_km = float(R.min()) * EARTH_RADIUS_KM
-
-    # Hard invariants (spec: Validation).
-    assert d[nearest] <= R.min() + 1e-12, summit["id"]
-    assert R.min() <= d[nearest] * 1.0001, summit["id"]
-    grid = int(np.argmin(np.abs(np.mod(theta - alpha[nearest] + np.pi, 2 * np.pi) - np.pi)))
-    blat, blon = destination(lat0, lon0, theta[grid : grid + 1], R[grid : grid + 1])
-    gap, _ = angular_distance_and_bearing(
-        float(blat[0]), float(blon[0]), lats_h[nearest : nearest + 1], lons_h[nearest : nearest + 1]
-    )
-    assert gap[0] * EARTH_RADIUS_KM <= 50.0, (
-        f"{summit['id']}: NHN {gap[0] * EARTH_RADIUS_KM:.1f} km off boundary"
-    )
-
-    rlats, rlons = cell_ring(lat0, lon0, theta, R)
-    north, south = poles_inside(lat0, theta, R)
-    geometry = ring_to_geojson_geometry(rlats, rlons, north, south)
-
     contributing = np.unique(idx)
-    features = [
+    # Order once by unrounded bearing (alpha, radians in [0, 2*pi), so sorting
+    # it directly matches degree order) and reuse that ordering for both the
+    # rounded display list and the ring's geometry inputs. Rounding bearings
+    # to 0.1 degrees before sorting/feeding jailer_ring can manufacture exact
+    # ties between distinct peaks that don't exist at full precision.
+    contributing = contributing[np.argsort(alpha[contributing])]
+    jailers = [
         {
-            "type": "Feature",
-            "properties": {
-                "summitId": summit["id"],
-                "computedIsolationKm": round(computed_iso_km, 1),
-                "nearestHigherName": str(names_h[nearest]),
-                "nearestHigherElevationM": int(elevs[higher][keep][nearest]),
-                "contributingPeakCount": int(len(contributing)),
-                "datasetNote": DATASET_NOTE,
-            },
-            "geometry": geometry,
+            "name": str(names_h[i]),
+            "elevationM": int(elevs_h[i]),
+            "distanceKm": round(float(d[i]) * EARTH_RADIUS_KM, 1),
+            "bearingDeg": round(float(np.degrees(alpha[i])), 1),
+            "coordinates": [round(float(lons_h[i]), 4), round(float(lats_h[i]), 4)],
         }
+        for i in contributing
     ]
-    for i in contributing:
-        features.append(
-            {
-                "type": "Feature",
-                "properties": {
-                    "name": str(names_h[i]),
-                    "elevationM": int(elevs[higher][keep][i]),
-                    "distanceKm": round(float(d[i]) * EARTH_RADIUS_KM, 1),
-                    "bearingDeg": round(float(np.degrees(alpha[i])), 1),
-                },
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [round(float(lons_h[i]), 4), round(float(lats_h[i]), 4)],
-                },
-            }
-        )
+    iso_km = round(float(d.min()) * EARTH_RADIUS_KM, 1)
+    nhn = min(jailers, key=lambda j: j["distanceKm"])
+    assert nhn["distanceKm"] == iso_km, summit["id"]  # nearest higher is always a jailer
 
-    row["computed_iso"] = round(computed_iso_km, 1)
-    row["computed_nhn"] = str(names_h[nearest])
-    row["contributing"] = int(len(contributing))
-    if computed_iso_km < 50.0:
-        row["flags"].append("SUSPICIOUS: computed isolation < 50 km (duplicate catalogue entry?)")
+    ring, area_km2 = jailer_ring(
+        lat0, lon0,
+        lats_h[contributing],
+        lons_h[contributing],
+        np.degrees(alpha[contributing]),
+        d[contributing] * EARTH_RADIUS_KM,
+    )
+    entry = {
+        "isolationKmComputed": iso_km,
+        "nhn": dict(nhn),
+        "jailers": jailers,
+        "ring": ring,
+        "ringAreaKm2": round(area_km2, 1) if area_km2 is not None else None,
+        "meanSpokeKm": round(float(np.mean([j["distanceKm"] for j in jailers])), 1),
+    }
+
+    row["computed_iso"] = iso_km
+    row["computed_nhn"] = nhn["name"]
+    row["jailer_count"] = len(jailers)
+    row["ring_area_km2"] = entry["ringAreaKm2"]
+    if len(jailers) < 3:
+        row["flags"].append("fewer than 3 jailers — no ring polygon")
+    if iso_km < 50.0:
+        row["flags"].append("SUSPICIOUS: computed isolation < 50 km")
     if summit["isolationKm"]:
-        delta = abs(computed_iso_km - summit["isolationKm"]) / summit["isolationKm"]
+        delta = abs(iso_km - summit["isolationKm"]) / summit["isolationKm"]
         if delta > 0.10:
             row["flags"].append(f"WARN: {delta:.0%} off Wikipedia isolation")
-    return {"type": "FeatureCollection", "features": features}, row
+    return entry, row
 
 
 def main():
+    import datetime
+
     summits_path = CACHE / "summits.json"
     if not summits_path.exists():
         raise SystemExit("scripts/.cache/summits.json missing — run: node scripts/export-summits.mjs")
     summits = json.loads(summits_path.read_text())
     names, lats, lons, elevs = load_geonames(CACHE)
     print(f"{len(elevs):,} candidate peaks loaded from GeoNames")
-    OUTPUT.mkdir(parents=True, exist_ok=True)
 
-    rows = []
+    entries, rows = {}, []
     for summit in summits:
-        fc, row = build_cell(summit, names, lats, lons, elevs)
+        entry, row = build_summit_entry(summit, names, lats, lons, elevs)
         rows.append(row)
-        if fc:
-            path = OUTPUT / f"{summit['id']}.json"
-            path.write_text(json.dumps(fc, separators=(",", ":")))
+        if entry:
+            entries[summit["id"]] = entry
             print(
-                f"{summit['id']:>18}: iso {row['computed_iso']:>8} km "
-                f"(wiki {row['wiki_iso']}), {row['contributing']} contributing, "
-                f"NHN {row['computed_nhn']} {' '.join(row['flags'])}"
+                f"{summit['id']:>18}: iso {row['computed_iso']:>8} km (wiki {row['wiki_iso']}), "
+                f"{row['jailer_count']} jailers, ring {row['ring_area_km2']} km2 {' '.join(row['flags'])}"
             )
         else:
             print(f"{summit['id']:>18}: skipped — {'; '.join(row['flags'])}")
@@ -229,20 +215,27 @@ def main():
         f"Aconcagua sanity check failed: {aconcagua['computed_iso']} km"
     )
 
+    out_path = SCRIPTS.parent / "public" / "data" / "jailers.json"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(
+        {"generated": datetime.date.today().isoformat(), "datasetNote": DATASET_NOTE, "summits": entries},
+        separators=(",", ":"),
+    ))
+
     report = [
-        "# Dominance cell build report",
+        "# Jailers build report",
         "",
-        "| Summit | Wiki iso (km) | Computed iso (km) | Wiki NHN | Computed nearest higher | Contributing | Flags |",
-        "|---|---|---|---|---|---|---|",
+        "| Summit | Wiki iso (km) | Computed iso (km) | Wiki NHN | Computed NHN | Jailers | Ring area (km2) | Flags |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for r in rows:
         report.append(
             f"| {r['name']} | {r['wiki_iso'] or '—'} | {r['computed_iso'] or '—'} "
-            f"| {r['wiki_nhn'] or '—'} | {r['computed_nhn'] or '—'} "
-            f"| {r['contributing']} | {'; '.join(r['flags']) or '—'} |"
+            f"| {r['wiki_nhn'] or '—'} | {r['computed_nhn'] or '—'} | {r['jailer_count']} "
+            f"| {r['ring_area_km2'] or '—'} | {'; '.join(r['flags']) or '—'} |"
         )
-    (SCRIPTS / "cell-report.md").write_text("\n".join(report) + "\n")
-    print(f"\nwrote {sum(1 for r in rows if r['computed_iso'])} cell files and scripts/cell-report.md")
+    (SCRIPTS / "jailers-report.md").write_text("\n".join(report) + "\n")
+    print(f"\nwrote {len(entries)} summit entries to public/data/jailers.json and scripts/jailers-report.md")
 
 
 if __name__ == "__main__":

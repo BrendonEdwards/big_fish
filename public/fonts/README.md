@@ -9,7 +9,7 @@ elevation text) and downloads only those ranges.
 **A missing range is not cosmetic:** MapLibre drops the entire tile when a
 glyph fetch 404s, which silently removes every layer on that source —
 markers included. Re-run `node scripts/fetch-glyphs.mjs` after regenerating
-`public/data/cells/` in case new peak names introduce new character ranges.
+`public/data/jailers.json` in case new peak names introduce new character ranges.
 
 The repo-root `fonts` symlink points here so the dev server
 (`python3 -m http.server` from the repo root) resolves the same `/fonts/...`

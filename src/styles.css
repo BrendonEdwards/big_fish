@@ -29,6 +29,12 @@ dt { color: #8bd3ff; font-size: .75rem; font-weight: 800; letter-spacing: .08em;
 dd { margin: .1rem 0 0; color: #fff; }
 #summit-notes { margin: 1rem 0 0; color: #c9d8e8; line-height: 1.45; }
 .data-note { margin: .5rem 0 0; color: #7f93a8; font-size: .75rem; line-height: 1.4; }
+#jailer-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .75rem; max-height: 7.5rem; overflow-y: auto; }
+.jailer-chip {
+  border: 1px solid rgb(255 183 3 / 35%); border-radius: 999px; background: rgb(255 183 3 / 10%);
+  color: #ffe0a3; font-size: .72rem; padding: .25rem .6rem; cursor: pointer;
+}
+.jailer-chip:hover { background: rgb(255 183 3 / 25%); }
 .maplibregl-popup-content { color: #07111f; border-radius: .75rem; padding: .75rem .9rem; }
 .maplibregl-ctrl-attrib { color: #132236; }
 @media (max-width: 720px) {
@@ -59,3 +65,26 @@ dd { margin: .1rem 0 0; color: #fff; }
   width: 100%;
 }
 
+.mode-control { display: flex; gap: 1rem; border: 0; padding: 0; margin: 1rem 0 0; color: #c9d8e8; font-size: .8rem; }
+.mode-control input { accent-color: #48b8ff; }
+
+.terrain-control { display: block; margin-top: .5rem; color: #c9d8e8; font-size: .8rem; }
+.terrain-control input { accent-color: #48b8ff; }
+
+.rankings-button {
+  margin-top: .75rem; width: 100%; padding: .5rem; border-radius: .6rem; cursor: pointer;
+  border: 1px solid rgb(72 184 255 / 40%); background: rgb(72 184 255 / 12%); color: #8bd3ff; font-weight: 700;
+}
+.rankings-button:hover { background: rgb(72 184 255 / 24%); }
+#rankings-dialog {
+  border: 1px solid rgb(255 255 255 / 14%); border-radius: 1rem; background: rgb(7 17 31 / 96%);
+  color: #f8fbff; padding: 1.25rem; width: min(44rem, 92vw);
+}
+#rankings-dialog::backdrop { background: rgb(0 0 0 / 55%); }
+#rankings-dialog .table-scroll { max-height: 60vh; overflow: auto; }
+#rankings-dialog table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+#rankings-dialog th, #rankings-dialog td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid rgb(255 255 255 / 8%); }
+#rankings-dialog th[data-metric] { cursor: pointer; color: #8bd3ff; }
+#rankings-dialog th[data-metric].active { color: #ffd166; }
+#rankings-dialog tbody tr { cursor: pointer; }
+#rankings-dialog tbody tr:hover { background: rgb(72 184 255 / 10%); }

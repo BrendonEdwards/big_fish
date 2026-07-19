@@ -66,28 +66,66 @@ try {
   const rendered = await page.evaluate(() => window.__bigfish.map.queryRenderedFeatures({ layers: ['summits'] }).length);
   if (rendered < 3) throw new Error(`expected summit markers rendered at world view, got ${rendered}`);
 
-  // Real click on Kilimanjaro's marker selects it and loads its cell
+  // Real click on Kilimanjaro's marker selects it and loads its spokes
   await clickSummitMarker(page, 'kilimanjaro', [37.36, -3.07]);
   await expectPanel(page, 'Kilimanjaro');
   await page.waitForFunction(
-    () => (window.__bigfish.map.getSource('voronoi-cell')?._data?.features?.length ?? 0) > 0,
+    () => (window.__bigfish.map.getSource('jailer-spokes')?._data?.features?.length ?? 0) > 0,
     null, { timeout: 15000 },
   );
   const selected = await page.evaluate(() =>
     window.__bigfish.map.getFeatureState({ source: 'summits', id: 'kilimanjaro' }).selected ?? false);
   if (!selected) throw new Error('kilimanjaro not marked selected after marker click');
-  const peakCount = await page.evaluate(() => window.__bigfish.map.getSource('cell-peaks')._data.features.length);
+  const peakCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-points')._data.features.length);
   if (peakCount < 1) throw new Error('expected contributing peaks for Kilimanjaro');
   const computedText = await page.textContent('#summit-computed');
   if (!/km/.test(computedText)) throw new Error(`unexpected computed isolation text: ${computedText}`);
-
-  // Clicking elsewhere inside the cell fill keeps the summit selected
-  await page.mouse.click(1000, 250);
-  await page.waitForTimeout(800);
-  const panelAfterCellClick = await page.textContent('#summit-name');
-  if (panelAfterCellClick !== 'Kilimanjaro') throw new Error(`cell-fill click changed selection to "${panelAfterCellClick}"`);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${cacheDir}/smoke-kilimanjaro.png` });
+
+  // ring + stats + chips
+  const ringCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-ring')._data.features.length);
+  if (ringCount !== 1) throw new Error(`expected 1 ring feature, got ${ringCount}`);
+  const areaText = await page.textContent('#summit-area');
+  if (!/km²/.test(areaText)) throw new Error(`unexpected ring area text: ${areaText}`);
+  const chipCount = await page.evaluate(() => document.querySelectorAll('#jailer-chips .jailer-chip').length);
+  if (chipCount < 1) throw new Error('expected jailer chips');
+
+  // rankings: open, re-sort, click through
+  await page.click('#open-rankings');
+  await page.waitForSelector('#rankings-dialog[open]');
+  await page.click('#rankings-dialog th[data-metric="jailerCount"]');
+  const clickedName = await page.evaluate(() => {
+    const row = document.querySelector('#rankings-dialog tbody tr');
+    const name = row.children[1].textContent;
+    row.click();
+    return name;
+  });
+  await page.waitForFunction(() => !document.querySelector('#rankings-dialog').open, null, { timeout: 5000 });
+  const panelAfterRanking = await page.textContent('#summit-name');
+  if (panelAfterRanking !== clickedName) throw new Error(`rankings click-through selected "${panelAfterRanking}", expected "${clickedName}"`);
+
+  // web mode: many spokes, hover highlight filter updates
+  await page.evaluate(() => window.__bigfish.setDisplayMode('web'));
+  await page.waitForTimeout(500);
+  const webSpokes = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
+  if (webSpokes < 100) throw new Error(`expected many web-mode spokes, got ${webSpokes}`);
+  // rankings click-through may have selected a different summit and moved the
+  // camera — re-click Kilimanjaro's marker so its point is on-screen for the hover check
+  await clickSummitMarker(page, 'kilimanjaro', [37.36, -3.07]);
+  await page.waitForTimeout(400);
+  const hoverFilter = await page.evaluate(() => JSON.stringify(window.__bigfish.map.getFilter('spokes-core-hover')));
+  if (!hoverFilter.includes('kilimanjaro')) throw new Error(`hover filter not set: ${hoverFilter}`);
+  await page.evaluate(() => window.__bigfish.setDisplayMode('selected'));
+
+  // terrain toggle round-trip
+  await page.evaluate(() => window.__bigfish.setTerrainEnabled(true));
+  await page.waitForTimeout(1500);
+  const terrainOn = await page.evaluate(() => !!window.__bigfish.map.getTerrain());
+  if (!terrainOn) throw new Error('terrain did not enable');
+  await page.evaluate(() => window.__bigfish.setTerrainEnabled(false));
+  const terrainOff = await page.evaluate(() => window.__bigfish.map.getTerrain() === null);
+  if (!terrainOff) throw new Error('terrain did not disable');
 
   // Slider at max: only Everest (exempt) and Aconcagua (16,520 km) remain
   await page.evaluate(() => {
@@ -109,15 +147,15 @@ try {
   });
   await page.waitForTimeout(1000);
 
-  // Real click on Everest's marker: selectable, but no cell
+  // Real click on Everest's marker: selectable, but no jailers
   await clickSummitMarker(page, 'everest', [86.93, 27.99]);
   await expectPanel(page, 'Mount Everest');
   await page.waitForFunction(
-    () => document.querySelector('#summit-computed').textContent.includes('No cell'),
+    () => document.querySelector('#summit-computed').textContent.includes('No jailers'),
     null, { timeout: 15000 },
   );
-  const cellCount = await page.evaluate(() => window.__bigfish.map.getSource('voronoi-cell')._data.features.length);
-  if (cellCount !== 0) throw new Error('expected empty cell source for Everest');
+  const spokeCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
+  if (spokeCount !== 0) throw new Error('expected empty spokes source for Everest');
 
   console.log(`SMOKE PASS (${baseUrl ? 'remote: ' + baseUrl : 'local dev server'})`);
 } finally {

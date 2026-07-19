@@ -146,3 +146,100 @@ def test_geometry_both_poles_world_with_hole():
     assert geom.contains(Point(-30.0, 0.0))      # west of the summit: inside
     assert geom.contains(Point(-100.0, 0.0))     # far west: inside (far side capped at 179°)
     assert not geom.contains(Point(60.0, 0.0))   # beyond the eastern frontier: outside
+
+
+import pytest
+
+from cell_geometry import angular_distance_and_bearing, jailer_ring
+
+
+def _square_jailers():
+    # four jailers 10 deg from (0, 0) at the cardinal bearings
+    lats = np.array([10.0, 0.0, -10.0, 0.0])
+    lons = np.array([0.0, 10.0, 0.0, -10.0])
+    bearings = np.array([0.0, 90.0, 180.0, 270.0])
+    dists = np.full(4, np.radians(10.0)) * 6371.0088
+    return lats, lons, bearings, dists
+
+
+def test_jailer_ring_square():
+    from shapely.geometry import Point, shape
+
+    geometry, area = jailer_ring(0.0, 0.0, *_square_jailers())
+    geom = shape(geometry)
+    assert geom.is_valid
+    assert geom.contains(Point(0.0, 0.0))          # hub inside
+    assert not geom.contains(Point(15.0, 15.0))    # corner-ward point outside
+    # smooth quasi-circle of radius 10 deg: spherical cap 2*pi*R^2*(1-cos10) ~ 3.87M km2
+    assert 3.4e6 < area < 4.2e6
+
+
+def test_jailer_ring_needs_three_vertices():
+    lats, lons, bearings, dists = _square_jailers()
+    geometry, area = jailer_ring(0.0, 0.0, lats[:2], lons[:2], bearings[:2], dists[:2])
+    assert geometry is None and area is None
+
+
+def test_jailer_ring_antimeridian():
+    from shapely.geometry import shape
+
+    lats = np.array([10.0, 0.0, -10.0, 0.0])
+    lons = np.array([179.5, -170.5, 179.5, 169.5])
+    bearings = np.array([0.0, 90.0, 180.0, 270.0])
+    dists = np.full(4, np.radians(10.0)) * 6371.0088
+    geometry, area = jailer_ring(0.0, 179.5, lats, lons, bearings, dists)
+    geom = shape(geometry)
+    assert geometry["type"] == "MultiPolygon" and geom.is_valid
+    assert geom.bounds[0] >= -180 and geom.bounds[2] <= 180
+    assert 3.4e6 < area < 4.2e6
+
+
+def test_jailer_ring_containing_south_pole():
+    from shapely.geometry import shape
+
+    # hub near the south pole, jailers 10 deg away all around
+    lats = np.array([-75.0, -85.0, -85.0, -75.0])
+    lons = np.array([0.0, 90.0, -90.0, 180.0])
+    bearings = np.array([0.0, 90.0, 270.0, 180.0])
+    dists = np.full(4, np.radians(10.0)) * 6371.0088
+    geometry, area = jailer_ring(-85.0, 0.0, lats, lons, bearings, dists)
+    geom = shape(geometry)
+    assert geom.is_valid
+    assert geom.bounds[1] <= -89.9  # ring closed through the pole
+    assert area > 1.5e6
+
+
+def test_jailer_ring_narrow_cluster_wraps_hub():
+    from shapely.geometry import Point, shape
+
+    # Aconcagua-like: all jailers in a narrow bearing arc ~150 deg away. The
+    # closing sweep turns the ring into a near-circle around the hub through
+    # the jailers — world minus the antipodal cap.
+    hub_lat, hub_lon = -32.65, -70.01
+    lats = np.array([30.0, 35.0, 28.0, 36.0])
+    lons = np.array([75.0, 82.0, 88.0, 95.0])
+    d, alpha = angular_distance_and_bearing(hub_lat, hub_lon, lats, lons)
+    geometry, area = jailer_ring(
+        hub_lat, hub_lon, lats, lons, np.degrees(alpha), d * 6371.0088
+    )
+    geom = shape(geometry)
+    assert geom.is_valid
+    assert geom.contains(Point(-70.01, -32.65))    # hub inside
+    assert not geom.contains(Point(110.0, 33.0))   # antipodal cap: outside
+    assert area > 3.0e8                            # near-global ring
+
+
+def test_jailer_ring_tied_bearings():
+    from shapely.geometry import shape
+
+    # two jailers at exactly the same bearing, different distances, plus two
+    # others: must not crash and must stay valid (regression: rounded-bearing
+    # ties previously made the sweep go backwards)
+    lats = np.array([10.0, 20.0, 0.0, -10.0])
+    lons = np.array([0.0, 0.0, 10.0, 0.0])
+    bearings = np.array([0.0, 0.0, 90.0, 180.0])
+    dists = np.array([10.0, 20.0, 10.0, 10.0]) * 111.19
+    geometry, area = jailer_ring(0.0, 0.0, lats, lons, bearings, dists)
+    geom = shape(geometry)
+    assert geom.is_valid
+    assert area > 1.0e6

@@ -17,26 +17,28 @@ npm run dev
 
 The 40 summit positions are the Wikipedia Topographic isolation table entries, with researched WGS84 latitude/longitude values and converted in code to GeoJSON `[longitude, latitude]` arrays. See `docs/coordinates.md` for the coordinate audit trail.
 
-## Dominance cells
+## Ring of jailers
 
-Clicking a summit shows its dominance cell: the doubled spherical-Voronoi
-polygon whose boundary passes through the higher peaks that hem the summit
-in. The cell's minimum boundary distance is the summit's isolation, and the
-boundary touches the nearest higher neighbour. Cells are precomputed from
-the GeoNames catalogue (peaks/mountains/volcanoes/hills with elevations; range/group features and stale elevations filtered out) —
-coverage is thinnest near sea level, so low summits' cells reflect the
-nearest higher *catalogued* peak. See
-`docs/superpowers/specs/2026-07-18-voronoi-dominance-cells-design.md`.
+Clicking a summit shows its jailers — the higher peaks that hem it in
+(winners of at least one compass bearing in the radial frontier
+construction) — as glowing spokes colour-ramped by distance, plus the ring
+polygon whose vertices are the jailers themselves. The shortest spoke is
+the nearest higher neighbour; its length is the summit's isolation. A Web
+mode shows every summit's spokes at once with hover highlighting, the
+panel lists jailers as fly-to chips, a Rankings popup sorts summits by
+ring area / jailer count / mean spoke / isolation, and a 3D terrain toggle
+drapes the map over AWS Terrarium elevation tiles.
 
-To regenerate `public/data/cells/` (one-time ~400 MB GeoNames download,
-cached in `scripts/.cache/`):
+To regenerate `public/data/jailers.json` (one-time ~400 MB GeoNames
+download, cached in `scripts/.cache/`):
 
     /opt/homebrew/opt/python@3.12/bin/python3.12 -m venv scripts/.venv
     scripts/.venv/bin/pip install numpy shapely antimeridian pytest
     node scripts/export-summits.mjs
-    scripts/.venv/bin/python scripts/build_cells.py
+    scripts/.venv/bin/python scripts/build_jailers.py
+    node scripts/fetch-glyphs.mjs
 
-Validation report: `scripts/cell-report.md`. Tests:
+Validation report: `scripts/jailers-report.md`. Tests:
 `scripts/.venv/bin/pytest scripts/ -q` and `npm run smoke`.
 
 ## Token and tile configuration

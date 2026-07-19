@@ -12,7 +12,7 @@
       <section class="hero" aria-label="Application title">
         <p class="eyebrow">Topographical isolation</p>
         <h1>Big Fish</h1>
-        <p>Explore high-prominence summits, their nearest higher neighbours, and the dominance cells that hem them in.</p>
+        <p>Explore high-prominence summits, the jailers that hem them in, and the spokes that measure their isolation.</p>
       </section>
 
       <aside id="info-panel" class="info-panel" aria-live="polite">
@@ -22,17 +22,48 @@
           <div><dt>Nearest higher neighbour</dt><dd id="summit-nhn">—</dd></div>
           <div><dt>Isolation</dt><dd id="summit-isolation">—</dd></div>
           <div><dt>Computed isolation</dt><dd id="summit-computed">—</dd></div>
+          <div><dt>Ring area</dt><dd id="summit-area">—</dd></div>
+          <div><dt>Mean spoke</dt><dd id="summit-mean-spoke">—</dd></div>
         </dl>
+        <div id="jailer-chips" aria-label="Jailers by distance"></div>
+        <fieldset class="mode-control" aria-label="Display mode">
+          <label><input type="radio" name="display-mode" value="selected" checked /> Selected</label>
+          <label><input type="radio" name="display-mode" value="web" /> Web</label>
+        </fieldset>
+        <label class="terrain-control"><input id="terrain-toggle" type="checkbox" /> 3D terrain</label>
+        <button id="open-rankings" type="button" class="rankings-button">Rankings</button>
         <label class="filter-control" for="isolation-filter">
-          <span>Minimum isolation</span>
+          <span>Min isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
-          <input id="isolation-filter" type="range" min="0" max="40075" step="50" value="0" />
+          <input id="isolation-filter" type="range" min="0" max="1000" step="1" value="0" />
         </label>
-        <p id="summit-notes">Click a peak marker or dominance cell to inspect map-native feature data.</p>
-        <p class="data-note">Dominance cells are derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
+        <label class="filter-control" for="isolation-filter-max">
+          <span>Max isolation</span>
+          <output id="isolation-filter-max-value" for="isolation-filter-max">0 km</output>
+          <input id="isolation-filter-max" type="range" min="0" max="1000" step="1" value="1000" />
+        </label>
+        <p id="summit-notes">Click a peak marker to see its ring of jailers.</p>
+        <p class="data-note">Jailer data derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
       </aside>
 
       <div id="map" aria-label="Interactive globe map"></div>
+      <dialog id="rankings-dialog" aria-label="Summit rankings">
+        <h2>Rankings</h2>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Summit</th>
+                <th data-metric="ringAreaKm2" class="active">Ring area (km²)</th>
+                <th data-metric="jailerCount">Jailers</th>
+                <th data-metric="meanSpokeKm">Mean spoke (km)</th>
+                <th data-metric="isolationKm">Isolation (km)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </dialog>
     </main>
     <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
     <script type="module" src="/src/main.js"></script>
