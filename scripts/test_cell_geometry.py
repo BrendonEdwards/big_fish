@@ -227,3 +227,19 @@ def test_jailer_ring_narrow_cluster_wraps_hub():
     assert geom.contains(Point(-70.01, -32.65))    # hub inside
     assert not geom.contains(Point(110.0, 33.0))   # antipodal cap: outside
     assert area > 3.0e8                            # near-global ring
+
+
+def test_jailer_ring_tied_bearings():
+    from shapely.geometry import shape
+
+    # two jailers at exactly the same bearing, different distances, plus two
+    # others: must not crash and must stay valid (regression: rounded-bearing
+    # ties previously made the sweep go backwards)
+    lats = np.array([10.0, 20.0, 0.0, -10.0])
+    lons = np.array([0.0, 0.0, 10.0, 0.0])
+    bearings = np.array([0.0, 0.0, 90.0, 180.0])
+    dists = np.array([10.0, 20.0, 10.0, 10.0]) * 111.19
+    geometry, area = jailer_ring(0.0, 0.0, lats, lons, bearings, dists)
+    geom = shape(geometry)
+    assert geom.is_valid
+    assert area > 1.0e6

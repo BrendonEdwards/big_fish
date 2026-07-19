@@ -135,8 +135,14 @@ def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg,
         j = (i + 1) % n
         gap = (bearings[j] - bearings[i]) % 360.0
         if gap == 0.0:
-            gap = step_deg
-        steps = max(1, int(np.ceil((gap if gap > 0 else step_deg) / step_deg)))
+            # Exact tie (two jailers at the same bearing, different
+            # distances): a legitimate radial jump, not a sweep to fill.
+            # Emit a single zero-width sample; the next segment starts the
+            # sweep onward from bearings[j] == bearings[i].
+            theta_parts.append(np.radians([bearings[i]]))
+            r_parts.append(np.asarray([dists[i]]))
+            continue
+        steps = max(1, int(np.ceil(gap / step_deg)))
         t = np.arange(steps) / steps
         theta_parts.append(np.radians(bearings[i] + gap * t))
         r_parts.append(dists[i] * (1 - t) + dists[j] * t)
@@ -148,7 +154,11 @@ def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg,
     # Uniform for every case — normal rings, pole-containing rings, and the
     # both-poles world-with-hole case — with no geodesic-library edge cases.
     dtheta = np.diff(np.concatenate([theta, [theta[0] + 2.0 * np.pi]]))
-    assert np.all(dtheta > 0), "ring bearing sweep must be strictly increasing"
+    # A zero-width step at a tied bearing (see gap == 0.0 above) is a
+    # legitimate radial jump — its area contribution is 0 either way — so
+    # the sweep only needs to be non-decreasing, not strictly increasing;
+    # the closing wrap still guarantees the full 360-degree sweep.
+    assert np.all(dtheta >= 0), "ring bearing sweep must be non-decreasing"
     area_km2 = float(EARTH_RADIUS_KM ** 2 * np.sum((1.0 - np.cos(R)) * dtheta))
     lats, lons = cell_ring(hub_lat, hub_lon, theta, R)
     north, south = poles_inside(hub_lat, np.mod(theta, 2 * np.pi), R)

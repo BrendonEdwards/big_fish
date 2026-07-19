@@ -136,29 +136,32 @@ def build_summit_entry(summit, names, lats, lons, elevs):
 
     theta, R, idx = boundary_distances(d, alpha)
     contributing = np.unique(idx)
-    jailers = sorted(
-        (
-            {
-                "name": str(names_h[i]),
-                "elevationM": int(elevs_h[i]),
-                "distanceKm": round(float(d[i]) * EARTH_RADIUS_KM, 1),
-                "bearingDeg": round(float(np.degrees(alpha[i])), 1),
-                "coordinates": [round(float(lons_h[i]), 4), round(float(lats_h[i]), 4)],
-            }
-            for i in contributing
-        ),
-        key=lambda j: j["bearingDeg"],
-    )
+    # Order once by unrounded bearing (alpha, radians in [0, 2*pi), so sorting
+    # it directly matches degree order) and reuse that ordering for both the
+    # rounded display list and the ring's geometry inputs. Rounding bearings
+    # to 0.1 degrees before sorting/feeding jailer_ring can manufacture exact
+    # ties between distinct peaks that don't exist at full precision.
+    contributing = contributing[np.argsort(alpha[contributing])]
+    jailers = [
+        {
+            "name": str(names_h[i]),
+            "elevationM": int(elevs_h[i]),
+            "distanceKm": round(float(d[i]) * EARTH_RADIUS_KM, 1),
+            "bearingDeg": round(float(np.degrees(alpha[i])), 1),
+            "coordinates": [round(float(lons_h[i]), 4), round(float(lats_h[i]), 4)],
+        }
+        for i in contributing
+    ]
     iso_km = round(float(d.min()) * EARTH_RADIUS_KM, 1)
     nhn = min(jailers, key=lambda j: j["distanceKm"])
     assert nhn["distanceKm"] == iso_km, summit["id"]  # nearest higher is always a jailer
 
     ring, area_km2 = jailer_ring(
         lat0, lon0,
-        np.array([j["coordinates"][1] for j in jailers]),
-        np.array([j["coordinates"][0] for j in jailers]),
-        np.array([j["bearingDeg"] for j in jailers]),
-        np.array([j["distanceKm"] for j in jailers]),
+        lats_h[contributing],
+        lons_h[contributing],
+        np.degrees(alpha[contributing]),
+        d[contributing] * EARTH_RADIUS_KM,
     )
     entry = {
         "isolationKmComputed": iso_km,
