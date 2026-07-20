@@ -51,16 +51,17 @@
       <div id="map" aria-label="Interactive globe map"></div>
       <dialog id="rankings-dialog" aria-label="Summit rankings">
         <h2>Rankings</h2>
+        <p class="rankings-legend">Underdog Index: dominance per metre of height (0 to 100). Edwards Polygon: km² of the summit's dominance region. Higher neighbours: count of higher peaks bounding it. Mean spoke: average distance to them. Isolation: distance to the nearest higher peak.</p>
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
                 <th>#</th><th>Summit</th>
-                <th data-metric="underdogIndex" class="active">Underdog Index</th>
-                <th data-metric="ringAreaKm2">Ring area (km²)</th>
-                <th data-metric="jailerCount">Jailers</th>
-                <th data-metric="meanSpokeKm">Mean spoke (km)</th>
-                <th data-metric="isolationKm">Isolation (km)</th>
+                <th data-metric="underdogIndex" class="active" title="Dominance per metre of height, log-normalised 0 to 100">Underdog Index</th>
+                <th data-metric="ringAreaKm2" title="Area of the summit's dominance region (Edwards Polygon)">Edwards Polygon (km²)</th>
+                <th data-metric="jailerCount" title="Count of higher peaks that bound the summit">Higher neighbours</th>
+                <th data-metric="meanSpokeKm" title="Average distance to those higher peaks">Mean spoke (km)</th>
+                <th data-metric="isolationKm" title="Distance to the nearest higher peak">Isolation (km)</th>
               </tr>
             </thead>
             <tbody></tbody>

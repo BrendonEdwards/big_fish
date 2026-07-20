@@ -299,7 +299,11 @@ map.on('load', () => {
           : span > 0 ? Math.round(100 * (Math.log(row.underdogRaw) - lnMin) / span) : 100,
       }));
     },
-    onSelect: (id) => selectSummit(id),
+    onSelect: (id) => {
+      selectSummit(id);
+      const summit = summits.find((s) => s.id === id);
+      if (summit) map.flyTo({ center: summit.coordinates, zoom: Math.max(map.getZoom(), 2.2), duration: 1400 });
+    },
   });
 
   initMethodology();

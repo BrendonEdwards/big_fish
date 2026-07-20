@@ -90,6 +90,7 @@ dd { margin: .1rem 0 0; color: #fff; }
 #rankings-dialog th[data-metric].active { color: #ffd166; }
 #rankings-dialog tbody tr { cursor: pointer; }
 #rankings-dialog tbody tr:hover { background: rgb(72 184 255 / 10%); }
+#rankings-dialog .rankings-legend { margin: 0 0 .75rem; color: #9fb3c8; font-size: .78rem; line-height: 1.45; }
 #methodology-dialog {
   border: 1px solid rgb(255 255 255 / 14%); border-radius: 1rem; background: rgb(7 17 31 / 96%);
   color: #f8fbff; padding: 1.25rem; width: min(44rem, 92vw);
