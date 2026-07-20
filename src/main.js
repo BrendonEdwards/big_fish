@@ -307,7 +307,7 @@ map.on('load', () => {
     onSelect: (id) => {
       selectSummit(id);
       const summit = summits.find((s) => s.id === id);
-      if (summit) map.flyTo({ center: summit.coordinates, zoom: Math.max(map.getZoom(), 2.2), duration: 1400 });
+      if (summit && summitPassesFilter(summit)) map.flyTo({ center: summit.coordinates, zoom: Math.max(map.getZoom(), 2.2), duration: 1400 });
     },
   });
 
