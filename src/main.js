@@ -275,15 +275,29 @@ map.on('load', () => {
   document.querySelector('#terrain-toggle').addEventListener('change', (event) => setTerrainEnabled(event.target.checked));
 
   initRankings({
-    getRows: () => summits.map((summit) => {
-      const data = jailersData?.summits?.[summit.id];
-      return {
-        id: summit.id, name: summit.name, isolationKm: summit.isolationKm,
-        ringAreaKm2: data?.ringAreaKm2 ?? null,
-        jailerCount: data ? data.jailers.length : null,
-        meanSpokeKm: data?.meanSpokeKm ?? null,
-      };
-    }),
+    getRows: () => {
+      const base = summits.map((summit) => {
+        const data = jailersData?.summits?.[summit.id];
+        const ringAreaKm2 = data?.ringAreaKm2 ?? null;
+        const raw = ringAreaKm2 && summit.elevationM > 0 ? ringAreaKm2 / summit.elevationM : null;
+        return {
+          id: summit.id, name: summit.name, isolationKm: summit.isolationKm,
+          ringAreaKm2,
+          jailerCount: data ? data.jailers.length : null,
+          meanSpokeKm: data?.meanSpokeKm ?? null,
+          underdogRaw: Number.isFinite(raw) && raw > 0 ? raw : null,
+        };
+      });
+      const raws = base.map((row) => row.underdogRaw).filter((value) => value != null);
+      const lnMin = Math.log(Math.min(...raws));
+      const lnMax = Math.log(Math.max(...raws));
+      const span = lnMax - lnMin;
+      return base.map((row) => ({
+        ...row,
+        underdogIndex: row.underdogRaw == null ? null
+          : span > 0 ? Math.round(100 * (Math.log(row.underdogRaw) - lnMin) / span) : 100,
+      }));
+    },
     onSelect: (id) => selectSummit(id),
   });
 
