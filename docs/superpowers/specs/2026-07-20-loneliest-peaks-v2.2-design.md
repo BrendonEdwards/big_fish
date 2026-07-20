@@ -96,8 +96,7 @@ text changes). NO em dashes anywhere in this content. Sections, in order:
   narrowest radius equals the topographic isolation. It is built on
   established parts (spherical Voronoi / Delaunay neighbours and topographic
   isolation); the named polygon and its use as an isolation region is the
-  new bit. It is NOT a viewshed (a viewshed is line-of-sight visibility over
-  a terrain model; this is nearest-higher-ground by direction).
+  new bit.
 - **Copyable source block:** a `<pre><code>` block containing the LaTeX
   source of the definition, with a "Copy" button (writes to clipboard via
   `navigator.clipboard.writeText`), so others can reproduce it.
