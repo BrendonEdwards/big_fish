@@ -78,8 +78,8 @@ try {
   if (!selected) throw new Error('kilimanjaro not marked selected after marker click');
   const peakCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-points')._data.features.length);
   if (peakCount < 1) throw new Error('expected contributing peaks for Kilimanjaro');
-  const computedText = await page.textContent('#summit-computed');
-  if (!/km/.test(computedText)) throw new Error(`unexpected computed isolation text: ${computedText}`);
+  const computedText = await page.textContent('#summit-isolation');
+  if (!/km/.test(computedText)) throw new Error(`unexpected isolation text: ${computedText}`);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${cacheDir}/smoke-kilimanjaro.png` });
 

@@ -15,7 +15,7 @@ const SATELLITE_STYLE = {
       ],
       tileSize: 256,
       maxzoom: MAX_TILE_ZOOM,
-      attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+      attribution: 'Tiles © Esri. Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
     },
   },
   layers: [{ id: 'satellite', type: 'raster', source: 'satellite' }],
@@ -124,7 +124,7 @@ async function loadJailersData() {
     const response = await fetch(`${base}/jailers.json`).catch(() => null);
     if (response?.ok) return response.json();
   }
-  console.warn('jailers.json unavailable — spokes and rings disabled');
+  console.warn('jailers.json unavailable, spokes and rings disabled');
   return null;
 }
 
@@ -323,7 +323,6 @@ function selectSummit(summitId) {
   for (const { id } of summits) map.setFeatureState({ source: 'summits', id }, { selected: id === summit.id });
   document.querySelector('#summit-name').textContent = summit.name;
   document.querySelector('#summit-elevation').textContent = `${summit.elevationM.toLocaleString()} m`;
-  document.querySelector('#summit-isolation').textContent = summit.isolationKm ? `${summit.isolationKm.toLocaleString()} km` : 'Global high point';
   document.querySelector('#summit-notes').textContent = summit.notes;
   updateSelectedOverlays(summit);
   activePopup?.remove();
@@ -393,14 +392,14 @@ function resetInfoPanel() {
   map.getSource('jailer-ring')?.setData(collection([]));
   map.getSource('spotlight-mask')?.setData(collection([]));
   map.getSource('jailer-points')?.setData(collection([]));
-  document.querySelector('#summit-computed').textContent = '—';
-  document.querySelector('#summit-area').textContent = '—';
-  document.querySelector('#summit-mean-spoke').textContent = '—';
+  document.querySelector('#summit-isolation').textContent = '–';
+  document.querySelector('#summit-neighbours').textContent = '–';
+  document.querySelector('#summit-area').textContent = '–';
+  document.querySelector('#summit-mean-spoke').textContent = '–';
   document.querySelector('#jailer-chips').replaceChildren();
   document.querySelector('#summit-name').textContent = 'Select a summit';
-  document.querySelector('#summit-elevation').textContent = '—';
-  document.querySelector('#summit-nhn').textContent = '—';
-  document.querySelector('#summit-isolation').textContent = '—';
+  document.querySelector('#summit-elevation').textContent = '–';
+  document.querySelector('#summit-nhn').textContent = '–';
   document.querySelector('#summit-notes').textContent = 'No summits match the current isolation filter.';
 }
 
@@ -417,28 +416,35 @@ function updateSelectedOverlays(summit) {
 
 function renderJailerDetails(summit) {
   const data = jailersData?.summits?.[summit.id];
-
   if (summit.id === 'everest') {
-    document.querySelector('#summit-computed').textContent = '~38 million km (at closest approach)';
+    document.querySelector('#summit-isolation').textContent = '~38 million km (at closest approach)';
     document.querySelector('#summit-nhn').textContent = 'Maxwell Montes, Venus (~11 km)';
-    document.querySelector('#summit-area').textContent = '—';
-    document.querySelector('#summit-mean-spoke').textContent = '—';
+    document.querySelector('#summit-neighbours').textContent = '–';
+    document.querySelector('#summit-area').textContent = '–';
+    document.querySelector('#summit-mean-spoke').textContent = '–';
     document.querySelector('#summit-notes').textContent =
       'Nothing on Earth is higher, so Everest\'s nearest higher neighbour is off-world. '
       + 'Most people picture Mars and Olympus Mons (~22 km, the solar system\'s tallest), '
       + 'but Venus makes the closest planetary approaches to Earth (~38M km vs Mars\'s ~55M km), '
-      + 'and its Maxwell Montes (~11 km) already tops Everest — so Venus, not Mars, holds the title.';
+      + 'and its Maxwell Montes (~11 km) already tops Everest, so Venus, not Mars, holds the title.';
     document.querySelector('#jailer-chips').replaceChildren();
     return;
   }
-
-  const computed = document.querySelector('#summit-computed');
-  if (jailersData === null) computed.textContent = 'Jailer data unavailable';
-  else if (!data) computed.textContent = 'No jailers — nothing higher';
-  else computed.textContent = `${Math.round(data.isolationKmComputed).toLocaleString()} km · ${data.jailers.length} jailers`;
-  document.querySelector('#summit-nhn').textContent = data ? `${data.nhn.name} (${data.nhn.elevationM.toLocaleString()} m)` : (summit.id === 'everest' ? 'None — global high point' : summit.nhn ?? '—');
-  document.querySelector('#summit-area').textContent = data?.ringAreaKm2 ? `${Math.round(data.ringAreaKm2).toLocaleString()} km²` : '—';
-  document.querySelector('#summit-mean-spoke').textContent = data ? `${Math.round(data.meanSpokeKm).toLocaleString()} km` : '—';
+  const isolation = document.querySelector('#summit-isolation');
+  const neighbours = document.querySelector('#summit-neighbours');
+  if (jailersData === null) {
+    isolation.textContent = 'Isolation data unavailable';
+    neighbours.textContent = '–';
+  } else if (!data) {
+    isolation.textContent = 'No higher neighbours';
+    neighbours.textContent = '–';
+  } else {
+    isolation.textContent = `${Math.round(data.isolationKmComputed).toLocaleString()} km`;
+    neighbours.textContent = `${data.jailers.length}`;
+  }
+  document.querySelector('#summit-nhn').textContent = data ? `${data.nhn.name} (${data.nhn.elevationM.toLocaleString()} m)` : (summit.id === 'everest' ? 'None, global high point' : summit.nhn ?? '–');
+  document.querySelector('#summit-area').textContent = data?.ringAreaKm2 ? `${Math.round(data.ringAreaKm2).toLocaleString()} km²` : '–';
+  document.querySelector('#summit-mean-spoke').textContent = data ? `${Math.round(data.meanSpokeKm).toLocaleString()} km` : '–';
   const chips = document.querySelector('#jailer-chips');
   chips.replaceChildren();
   if (!data) return;

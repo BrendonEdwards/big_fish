@@ -29,6 +29,8 @@ dt { color: #8bd3ff; font-size: .75rem; font-weight: 800; letter-spacing: .08em;
 dd { margin: .1rem 0 0; color: #fff; }
 #summit-notes { margin: 1rem 0 0; color: #c9d8e8; line-height: 1.45; }
 .data-note { margin: .5rem 0 0; color: #7f93a8; font-size: .75rem; line-height: 1.4; }
+.source-link { margin: .5rem 0 0; color: #c9d8e8; font-size: .8rem; }
+.source-link a { color: #8bd3ff; }
 #jailer-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .75rem; max-height: 7.5rem; overflow-y: auto; }
 .jailer-chip {
   border: 1px solid rgb(255 183 3 / 35%); border-radius: 999px; background: rgb(255 183 3 / 10%);
