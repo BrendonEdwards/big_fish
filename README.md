@@ -1,4 +1,4 @@
-# Big Fish
+# The Loneliest Peaks
 
 Topographical isolation explorer for the 40 most topographically isolated summits on Earth. The app uses WGS84 longitude/latitude summit data with MapLibre GL JS rather than a custom `THREE.Scene`, `SphereGeometry`, and raycaster stack, so peak markers, nearest-higher-neighbour (NHN) points, isolation circles, and summit-to-NHN arcs are all rendered as geographically anchored map layers.
 

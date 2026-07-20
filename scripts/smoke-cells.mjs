@@ -58,7 +58,7 @@ try {
     }
   }
   const title = await page.title();
-  if (!title.includes('Big Fish')) throw new Error(`${target} is serving something else: "${title}"`);
+  if (!title.includes('Loneliest Peaks')) throw new Error(`${target} is serving something else: "${title}"`);
   await page.waitForFunction(() => window.__bigfish?.map?.isStyleLoaded?.(), null, { timeout: 30000 });
   await page.waitForTimeout(2000);
 
