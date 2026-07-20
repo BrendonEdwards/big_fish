@@ -87,7 +87,7 @@ function setTerrainEnabled(enabled) {
     }
     map.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 });
     if (!map.getLayer('hillshade')) {
-      map.addLayer({ id: 'hillshade', type: 'hillshade', source: 'hillshade-dem', paint: { 'hillshade-exaggeration': 0.35 } }, 'ring-fill');
+      map.addLayer({ id: 'hillshade', type: 'hillshade', source: 'hillshade-dem', paint: { 'hillshade-exaggeration': 0.35 } }, 'spotlight-dim');
     }
   } else {
     map.setTerrain(null);
@@ -227,8 +227,8 @@ map.on('load', () => {
   map.addSource('spotlight-mask', { type: 'geojson', data: collection([]) });
   map.addSource('jailer-points', { type: 'geojson', data: collection([]) });
   const spokeColor = ['interpolate', ['linear'], ['get', 'distanceKm'], 1500, '#ffb703', 6000, '#8ecae6', 12000, '#48b8ff'];
-  map.addLayer({ id: 'spotlight-dim', type: 'fill', source: 'spotlight-mask', paint: { 'fill-color': '#000000', 'fill-opacity': SPOTLIGHT_OPACITY } }, 'ring-fill');
   map.addLayer({ id: 'ring-fill', type: 'fill', source: 'jailer-ring', paint: { 'fill-color': '#48b8ff', 'fill-opacity': 0.06 } });
+  map.addLayer({ id: 'spotlight-dim', type: 'fill', source: 'spotlight-mask', paint: { 'fill-color': '#000000', 'fill-opacity': SPOTLIGHT_OPACITY } }, 'ring-fill');
   map.addLayer({ id: 'ring-outline', type: 'line', source: 'jailer-ring', paint: { 'line-color': '#48b8ff', 'line-width': 1.2, 'line-opacity': 0.7 } });
   map.addLayer({ id: 'spokes-glow-outer', type: 'line', source: 'jailer-spokes', layout: { 'line-cap': 'round' }, paint: { 'line-color': spokeColor, 'line-width': 10, 'line-opacity': 0.1, 'line-blur': 6 } });
   map.addLayer({ id: 'spokes-glow-inner', type: 'line', source: 'jailer-spokes', layout: { 'line-cap': 'round' }, paint: { 'line-color': spokeColor, 'line-width': 4.5, 'line-opacity': 0.25, 'line-blur': 2.5 } });

@@ -88,6 +88,10 @@ try {
   if (ringCount !== 1) throw new Error(`expected 1 ring feature, got ${ringCount}`);
   const maskCount = await page.evaluate(() => window.__bigfish.map.getSource('spotlight-mask')._data.features.length);
   if (maskCount !== 1) throw new Error(`expected 1 spotlight-mask feature for Kilimanjaro, got ${maskCount}`);
+  const hasDimLayer = await page.evaluate(() => !!window.__bigfish.map.getLayer('spotlight-dim'));
+  if (!hasDimLayer) throw new Error('spotlight-dim layer missing');
+  const dimOpacity = await page.evaluate(() => window.__bigfish.map.getPaintProperty('spotlight-dim', 'fill-opacity'));
+  if (dimOpacity !== 0.6) throw new Error(`spotlight-dim opacity ${dimOpacity}, expected 0.6`);
   const areaText = await page.textContent('#summit-area');
   if (!/km²/.test(areaText)) throw new Error(`unexpected ring area text: ${areaText}`);
   const chipCount = await page.evaluate(() => document.querySelectorAll('#jailer-chips .jailer-chip').length);
