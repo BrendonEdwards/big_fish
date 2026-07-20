@@ -96,6 +96,10 @@ function setTerrainEnabled(enabled) {
   }
 }
 
+function setProjectionMode(flat) {
+  map.setProjection({ type: flat ? 'mercator' : 'globe' });
+}
+
 const summits = peakData.map((peak) => {
   const coordinates = location(peak.latitude, peak.longitude).coordinates;
   const nhnCoordinates = peak.nhn ? location(peak.nhn.latitude, peak.nhn.longitude).coordinates : null;
@@ -274,6 +278,7 @@ map.on('load', () => {
   }
 
   document.querySelector('#terrain-toggle').addEventListener('change', (event) => setTerrainEnabled(event.target.checked));
+  document.querySelector('#projection-toggle').addEventListener('change', (event) => setProjectionMode(event.target.checked));
 
   initRankings({
     getRows: () => {
@@ -317,7 +322,7 @@ map.on('load', () => {
     if (map.getLayer('spokes-core')) map.setPaintProperty('spokes-core', 'line-dasharray', dashSequence[dashStep]);
   }, 130);
 
-  window.__bigfish = { map, selectSummit, setDisplayMode, setTerrainEnabled };
+  window.__bigfish = { map, selectSummit, setDisplayMode, setTerrainEnabled, setProjectionMode };
 });
 
 function selectSummit(summitId) {
