@@ -28,9 +28,11 @@ mode shows every summit's spokes at once with hover highlighting, the
 panel lists jailers as fly-to chips, a Rankings popup sorts summits by
 ring area / jailer count / mean spoke / isolation / Underdog Index (the
 default sort, a log-normalised measure of surprising isolation), and a 3D
-terrain toggle drapes the map over AWS Terrarium elevation tiles. A
-Methodology modal explains the GIS data sourcing and isolation
-methodology for a GIS-literate audience.
+terrain toggle drapes the map over AWS Terrarium elevation tiles, and a
+Flat map toggle switches the projection between globe and Web Mercator. A
+"For the data geeks" modal explains the GIS data sourcing and isolation
+methodology for a GIS-literate audience, including the Edwards Polygon
+definition.
 
 To regenerate `public/data/jailers.json` (one-time ~400 MB GeoNames
 download, cached in `scripts/.cache/`):

@@ -80,6 +80,10 @@ try {
   if (peakCount < 1) throw new Error('expected contributing peaks for Kilimanjaro');
   const computedText = await page.textContent('#summit-isolation');
   if (!/km/.test(computedText)) throw new Error(`unexpected isolation text: ${computedText}`);
+  const computedRow = await page.evaluate(() => !!document.querySelector('#summit-computed'));
+  if (computedRow) throw new Error('#summit-computed row should be removed');
+  const wikiHref = await page.evaluate(() => document.querySelector('.source-link a')?.href);
+  if (!/Topographic_isolation/.test(wikiHref ?? '')) throw new Error(`wiki link missing: ${wikiHref}`);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${cacheDir}/smoke-kilimanjaro.png` });
 
@@ -105,6 +109,7 @@ try {
   const topRowName = await page.evaluate(() => document.querySelector('#rankings-dialog tbody tr td:nth-child(2)')?.textContent);
   if (topRowName !== "Joe's Hill") throw new Error(`top underdog row ${topRowName}, expected Joe's Hill`);
   await page.click('#rankings-dialog th[data-metric="jailerCount"]');
+  const centerBefore = await page.evaluate(() => window.__bigfish.map.getCenter());
   const clickedName = await page.evaluate(() => {
     const row = document.querySelector('#rankings-dialog tbody tr');
     const name = row.children[1].textContent;
@@ -112,14 +117,33 @@ try {
     return name;
   });
   await page.waitForFunction(() => !document.querySelector('#rankings-dialog').open, null, { timeout: 5000 });
+  await page.waitForTimeout(1600);
+  const centerAfter = await page.evaluate(() => window.__bigfish.map.getCenter());
+  if (centerBefore.lng === centerAfter.lng && centerBefore.lat === centerAfter.lat) {
+    throw new Error('rankings row click did not recenter the map');
+  }
   const panelAfterRanking = await page.textContent('#summit-name');
-  if (panelAfterRanking !== clickedName) throw new Error(`rankings click-through selected "${panelAfterRanking}", expected "${clickedName}"`);
+  if (panelAfterRanking !== clickedName) throw new Error(`rankings selected ${panelAfterRanking}, expected ${clickedName}`);
 
-  // methodology modal opens and closes
+  // data-geeks modal: Edwards Polygon copy, formula image, no em dashes; then flat/globe toggle
   await page.click('#open-methodology');
   await page.waitForSelector('#methodology-dialog[open]');
+  const geekText = await page.textContent('#methodology-dialog');
+  if (!/Edwards Polygon/.test(geekText)) throw new Error('data-geeks modal missing Edwards Polygon');
+  if (geekText.includes('—')) throw new Error('em dash found in data-geeks modal');
+  const hasFormula = await page.evaluate(() => !!document.querySelector('#methodology-dialog .formula img'));
+  if (!hasFormula) throw new Error('formula image missing');
   await page.keyboard.press('Escape');
-  await page.waitForFunction(() => !document.querySelector('#methodology-dialog').open, null, { timeout: 5000 });
+  const panelText = await page.textContent('#info-panel');
+  if (panelText.includes('—')) throw new Error('em dash found in info panel');
+  await page.evaluate(() => window.__bigfish.setProjectionMode(true));
+  await page.waitForTimeout(800);
+  const flat = await page.evaluate(() => window.__bigfish.map.getProjection().type);
+  if (flat !== 'mercator') throw new Error(`flat toggle gave ${flat}`);
+  await page.evaluate(() => window.__bigfish.setProjectionMode(false));
+  await page.waitForTimeout(400);
+  const globe = await page.evaluate(() => window.__bigfish.map.getProjection().type);
+  if (globe !== 'globe') throw new Error(`globe restore gave ${globe}`);
 
   // web mode: many spokes, hover highlight filter updates
   await page.evaluate(() => window.__bigfish.setDisplayMode('web'));

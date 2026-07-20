@@ -4,13 +4,13 @@ export function initRankings({ getRows, onSelect }) {
   const headers = [...dialog.querySelectorAll('th[data-metric]')];
   let metric = 'underdogIndex';
 
-  const format = (value) => (value == null ? '—' : Math.round(value).toLocaleString());
+  const format = (value) => (value == null ? '–' : Math.round(value).toLocaleString());
 
   function render() {
     const rows = [...getRows()].sort((a, b) => (b[metric] ?? -Infinity) - (a[metric] ?? -Infinity));
     body.replaceChildren(...rows.map((row, index) => {
       const tr = document.createElement('tr');
-      const cells = [index + 1, row.name, format(row.underdogIndex), format(row.ringAreaKm2), row.jailerCount ?? '—', format(row.meanSpokeKm), format(row.isolationKm)];
+      const cells = [index + 1, row.name, format(row.underdogIndex), format(row.ringAreaKm2), row.jailerCount ?? '–', format(row.meanSpokeKm), format(row.isolationKm)];
       for (const value of cells) {
         const td = document.createElement('td');
         td.textContent = String(value);
