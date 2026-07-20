@@ -100,6 +100,10 @@ try {
   // rankings: open, re-sort, click through
   await page.click('#open-rankings');
   await page.waitForSelector('#rankings-dialog[open]');
+  const activeMetric = await page.evaluate(() => document.querySelector('#rankings-dialog th.active')?.dataset.metric);
+  if (activeMetric !== 'underdogIndex') throw new Error(`default sort ${activeMetric}, expected underdogIndex`);
+  const topRowName = await page.evaluate(() => document.querySelector('#rankings-dialog tbody tr td:nth-child(2)')?.textContent);
+  if (topRowName !== "Joe's Hill") throw new Error(`top underdog row ${topRowName}, expected Joe's Hill`);
   await page.click('#rankings-dialog th[data-metric="jailerCount"]');
   const clickedName = await page.evaluate(() => {
     const row = document.querySelector('#rankings-dialog tbody tr');
@@ -110,6 +114,12 @@ try {
   await page.waitForFunction(() => !document.querySelector('#rankings-dialog').open, null, { timeout: 5000 });
   const panelAfterRanking = await page.textContent('#summit-name');
   if (panelAfterRanking !== clickedName) throw new Error(`rankings click-through selected "${panelAfterRanking}", expected "${clickedName}"`);
+
+  // methodology modal opens and closes
+  await page.click('#open-methodology');
+  await page.waitForSelector('#methodology-dialog[open]');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('#methodology-dialog').open, null, { timeout: 5000 });
 
   // web mode: many spokes, hover highlight filter updates
   await page.evaluate(() => window.__bigfish.setDisplayMode('web'));
@@ -162,6 +172,10 @@ try {
   if (spokeCount !== 0) throw new Error('expected empty spokes source for Everest');
   const everestMask = await page.evaluate(() => window.__bigfish.map.getSource('spotlight-mask')._data.features.length);
   if (everestMask !== 0) throw new Error('expected no spotlight-mask for Everest');
+  const nhnText = await page.textContent('#summit-nhn');
+  if (!/Maxwell Montes/.test(nhnText)) throw new Error(`Everest NHN text: ${nhnText}`);
+  const notesText = await page.textContent('#summit-notes');
+  if (!/Olympus Mons/.test(notesText)) throw new Error('Everest notes missing the Olympus Mons explanation');
 
   console.log(`SMOKE PASS (${baseUrl ? 'remote: ' + baseUrl : 'local dev server'})`);
 } finally {

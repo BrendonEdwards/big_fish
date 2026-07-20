@@ -26,8 +26,11 @@ polygon whose vertices are the jailers themselves. The shortest spoke is
 the nearest higher neighbour; its length is the summit's isolation. A Web
 mode shows every summit's spokes at once with hover highlighting, the
 panel lists jailers as fly-to chips, a Rankings popup sorts summits by
-ring area / jailer count / mean spoke / isolation, and a 3D terrain toggle
-drapes the map over AWS Terrarium elevation tiles.
+ring area / jailer count / mean spoke / isolation / Underdog Index (the
+default sort, a log-normalised measure of surprising isolation), and a 3D
+terrain toggle drapes the map over AWS Terrarium elevation tiles. A
+Methodology modal explains the GIS data sourcing and isolation
+methodology for a GIS-literate audience.
 
 To regenerate `public/data/jailers.json` (one-time ~400 MB GeoNames
 download, cached in `scripts/.cache/`):
