@@ -268,6 +268,15 @@ map.on('load', () => {
   document.querySelector('#terrain-toggle').addEventListener('change', (event) => setTerrainEnabled(event.target.checked));
   document.querySelector('#projection-toggle').addEventListener('change', (event) => setProjectionMode(event.target.checked));
 
+  for (const button of document.querySelectorAll('.panel-collapse')) {
+    button.addEventListener('click', () => {
+      const panel = button.parentElement;
+      const collapsed = panel.classList.toggle('collapsed');
+      button.textContent = collapsed ? '+' : '–';
+      button.setAttribute('aria-expanded', String(!collapsed));
+    });
+  }
+
   initRankings({
     getRows: () => {
       const base = summits.map((summit) => {

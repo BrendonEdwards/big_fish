@@ -125,11 +125,11 @@ try {
   const panelAfterRanking = await page.textContent('#summit-name');
   if (panelAfterRanking !== clickedName) throw new Error(`rankings selected ${panelAfterRanking}, expected ${clickedName}`);
 
-  // data-geeks modal: Edwards Polygon copy, formula image, no em dashes; then flat/globe toggle
+  // data-geeks modal: dominance region copy, formula image, no em dashes; then flat/globe toggle
   await page.click('#open-methodology');
   await page.waitForSelector('#methodology-dialog[open]');
   const geekText = await page.textContent('#methodology-dialog');
-  if (!/Edwards Polygon/.test(geekText)) throw new Error('data-geeks modal missing Edwards Polygon');
+  if (!/dominance region/.test(geekText)) throw new Error('data-geeks modal missing dominance region');
   if (geekText.includes('—')) throw new Error('em dash found in data-geeks modal');
   const hasFormula = await page.evaluate(() => !!document.querySelector('#methodology-dialog .formula img'));
   if (!hasFormula) throw new Error('formula image missing');
