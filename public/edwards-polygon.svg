@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="289.9pt" height="295.385547pt" viewBox="0 0 289.9 295.385547" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="333.6pt" height="295.385547pt" viewBox="0 0 333.6 295.385547" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-07-20T13:59:26.641123</dc:date>
+    <dc:date>2026-07-20T14:05:03.730411</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -21,17 +21,17 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 295.385547 
-L 289.9 295.385547 
-L 289.9 0 
-L 0 0 
-L 0 295.385547 
+   <path d="M -0 295.385547 
+L 333.6 295.385547 
+L 333.6 0 
+L -0 0 
+L -0 295.385547 
 z
 " style="fill: none; opacity: 0"/>
   </g>
   <g id="text_1">
    <!-- $H(P) = \{\, q : h_q &gt; h_P,\ \delta(P,q) &gt; \varepsilon \,\}$ -->
-   <g style="fill: #0b1a2b" transform="translate(7.2 25.82) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(29.05 25.82) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-49" d="M 300 0 
 Q 238 0 238 84 
@@ -555,8 +555,8 @@ z
    </g>
   </g>
   <g id="text_2">
-   <!-- $\rho(\theta, q) = \arctan\left( \dfrac{\tan(d_q / 2)}{\cos(\theta - \alpha_q)} \right)$ -->
-   <g style="fill: #0b1a2b" transform="translate(21.165 86.578) scale(0.19 -0.19)">
+   <!-- $\rho(\theta, q) = \mathrm{atan2}\left( \tan(d_q / 2),\ \cos(\theta - \alpha_q) \right)$ -->
+   <g style="fill: #0b1a2b" transform="translate(7.2 72.323547) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-27" d="M 178 -1203 
 Q 178 -1166 184 -1153 
@@ -689,69 +689,6 @@ Q 1175 1331 975 1128
 Q 775 925 775 628 
 z
 " transform="scale(0.015625)"/>
-     <path id="Cmr10-84" d="M 166 0 
-L 166 225 
-Q 384 225 525 259 
-Q 666 294 666 428 
-L 666 2175 
-Q 666 2347 614 2423 
-Q 563 2500 466 2517 
-Q 369 2534 166 2534 
-L 166 2759 
-L 1081 2828 
-L 1081 2203 
-Q 1184 2481 1375 2654 
-Q 1566 2828 1838 2828 
-Q 2028 2828 2178 2715 
-Q 2328 2603 2328 2419 
-Q 2328 2303 2245 2217 
-Q 2163 2131 2041 2131 
-Q 1922 2131 1837 2215 
-Q 1753 2300 1753 2419 
-Q 1753 2591 1875 2663 
-L 1838 2663 
-Q 1578 2663 1414 2475 
-Q 1250 2288 1181 2009 
-Q 1113 1731 1113 1478 
-L 1113 428 
-Q 1113 225 1734 225 
-L 1734 0 
-L 166 0 
-z
-" transform="scale(0.015625)"/>
-     <path id="Cmr10-7b" d="M 1594 -72 
-Q 1206 -72 890 129 
-Q 575 331 394 667 
-Q 213 1003 213 1381 
-Q 213 1759 392 2106 
-Q 572 2453 889 2661 
-Q 1206 2869 1594 2869 
-Q 1969 2869 2276 2722 
-Q 2584 2575 2584 2241 
-Q 2584 2116 2495 2023 
-Q 2406 1931 2278 1931 
-Q 2150 1931 2061 2023 
-Q 1972 2116 1972 2241 
-Q 1972 2353 2044 2436 
-Q 2116 2519 2222 2541 
-Q 2000 2681 1600 2681 
-Q 1294 2681 1106 2478 
-Q 919 2275 844 1975 
-Q 769 1675 769 1381 
-Q 769 1072 861 783 
-Q 953 494 1158 305 
-Q 1363 116 1672 116 
-Q 1975 116 2187 302 
-Q 2400 488 2478 788 
-Q 2478 825 2528 825 
-L 2606 825 
-Q 2625 825 2640 808 
-Q 2656 791 2656 769 
-L 2656 750 
-Q 2559 372 2271 150 
-Q 1984 -72 1594 -72 
-z
-" transform="scale(0.015625)"/>
      <path id="Cmr10-1c" d="M 653 769 
 L 653 2534 
 L 122 2534 
@@ -813,34 +750,45 @@ L 1656 0
 L 191 0 
 z
 " transform="scale(0.015625)"/>
-     <path id="Cmex10-58" d="M 4569 -18919 
-Q 3684 -17988 3087 -16866 
-Q 2491 -15744 2147 -14511 
-Q 1803 -13278 1656 -11984 
-Q 1509 -10691 1509 -9344 
-Q 1509 -7991 1656 -6695 
-Q 1803 -5400 2147 -4167 
-Q 2491 -2934 3087 -1811 
-Q 3684 -688 4569 238 
-Q 4606 256 4616 256 
-L 4800 256 
-Q 4819 256 4834 236 
-Q 4850 216 4850 197 
-Q 4850 172 4838 159 
-Q 4034 -788 3504 -1914 
-Q 2975 -3041 2681 -4261 
-Q 2388 -5481 2272 -6725 
-Q 2156 -7969 2156 -9344 
-Q 2156 -10713 2272 -11953 
-Q 2388 -13194 2683 -14419 
-Q 2978 -15644 3506 -16766 
-Q 4034 -17888 4838 -18841 
-Q 4850 -18853 4850 -18881 
-Q 4850 -18897 4833 -18917 
-Q 4816 -18938 4800 -18938 
-L 4616 -18938 
-Q 4606 -18938 4593 -18931 
-Q 4581 -18925 4569 -18919 
+     <path id="Cmr10-31" d="M 319 0 
+L 319 172 
+Q 319 188 331 206 
+L 1325 1306 
+Q 1550 1550 1690 1715 
+Q 1831 1881 1968 2097 
+Q 2106 2313 2186 2536 
+Q 2266 2759 2266 3009 
+Q 2266 3272 2169 3511 
+Q 2072 3750 1880 3894 
+Q 1688 4038 1416 4038 
+Q 1138 4038 916 3870 
+Q 694 3703 603 3438 
+Q 628 3444 672 3444 
+Q 816 3444 917 3347 
+Q 1019 3250 1019 3097 
+Q 1019 2950 917 2848 
+Q 816 2747 672 2747 
+Q 522 2747 420 2851 
+Q 319 2956 319 3097 
+Q 319 3338 409 3548 
+Q 500 3759 670 3923 
+Q 841 4088 1055 4175 
+Q 1269 4263 1509 4263 
+Q 1875 4263 2190 4108 
+Q 2506 3953 2690 3670 
+Q 2875 3388 2875 3009 
+Q 2875 2731 2753 2481 
+Q 2631 2231 2440 2026 
+Q 2250 1822 1953 1562 
+Q 1656 1303 1563 1216 
+L 838 519 
+L 1453 519 
+Q 1906 519 2211 526 
+Q 2516 534 2534 550 
+Q 2609 631 2688 1141 
+L 2875 1141 
+L 2694 0 
+L 319 0 
 z
 " transform="scale(0.015625)"/>
      <path id="Cmmi10-51" d="M 1113 -72 
@@ -904,45 +852,37 @@ Q 434 -1600 396 -1562
 Q 359 -1525 359 -1472 
 z
 " transform="scale(0.015625)"/>
-     <path id="Cmr10-31" d="M 319 0 
-L 319 172 
-Q 319 188 331 206 
-L 1325 1306 
-Q 1550 1550 1690 1715 
-Q 1831 1881 1968 2097 
-Q 2106 2313 2186 2536 
-Q 2266 2759 2266 3009 
-Q 2266 3272 2169 3511 
-Q 2072 3750 1880 3894 
-Q 1688 4038 1416 4038 
-Q 1138 4038 916 3870 
-Q 694 3703 603 3438 
-Q 628 3444 672 3444 
-Q 816 3444 917 3347 
-Q 1019 3250 1019 3097 
-Q 1019 2950 917 2848 
-Q 816 2747 672 2747 
-Q 522 2747 420 2851 
-Q 319 2956 319 3097 
-Q 319 3338 409 3548 
-Q 500 3759 670 3923 
-Q 841 4088 1055 4175 
-Q 1269 4263 1509 4263 
-Q 1875 4263 2190 4108 
-Q 2506 3953 2690 3670 
-Q 2875 3388 2875 3009 
-Q 2875 2731 2753 2481 
-Q 2631 2231 2440 2026 
-Q 2250 1822 1953 1562 
-Q 1656 1303 1563 1216 
-L 838 519 
-L 1453 519 
-Q 1906 519 2211 526 
-Q 2516 534 2534 550 
-Q 2609 631 2688 1141 
-L 2875 1141 
-L 2694 0 
-L 319 0 
+     <path id="Cmr10-7b" d="M 1594 -72 
+Q 1206 -72 890 129 
+Q 575 331 394 667 
+Q 213 1003 213 1381 
+Q 213 1759 392 2106 
+Q 572 2453 889 2661 
+Q 1206 2869 1594 2869 
+Q 1969 2869 2276 2722 
+Q 2584 2575 2584 2241 
+Q 2584 2116 2495 2023 
+Q 2406 1931 2278 1931 
+Q 2150 1931 2061 2023 
+Q 1972 2116 1972 2241 
+Q 1972 2353 2044 2436 
+Q 2116 2519 2222 2541 
+Q 2000 2681 1600 2681 
+Q 1294 2681 1106 2478 
+Q 919 2275 844 1975 
+Q 769 1675 769 1381 
+Q 769 1072 861 783 
+Q 953 494 1158 305 
+Q 1363 116 1672 116 
+Q 1975 116 2187 302 
+Q 2400 488 2478 788 
+Q 2478 825 2528 825 
+L 2606 825 
+Q 2625 825 2640 808 
+Q 2656 791 2656 769 
+L 2656 750 
+Q 2559 372 2271 150 
+Q 1984 -72 1594 -72 
 z
 " transform="scale(0.015625)"/>
      <path id="Cmr10-42" d="M 1600 -72 
@@ -1084,79 +1024,45 @@ Q 750 484 892 290
 Q 1034 97 1300 97 
 z
 " transform="scale(0.015625)"/>
-     <path id="Cmex10-7e" d="M 269 -18938 
-Q 213 -18938 213 -18881 
-Q 213 -18853 225 -18841 
-Q 1019 -17903 1556 -16768 
-Q 2094 -15634 2384 -14414 
-Q 2675 -13194 2790 -11953 
-Q 2906 -10713 2906 -9344 
-Q 2906 -7969 2790 -6725 
-Q 2675 -5481 2384 -4265 
-Q 2094 -3050 1556 -1911 
-Q 1019 -772 225 159 
-Q 213 172 213 197 
-Q 213 256 269 256 
-L 453 256 
-Q 456 256 494 238 
-Q 1372 -678 1975 -1808 
-Q 2578 -2938 2922 -4178 
-Q 3266 -5419 3409 -6691 
-Q 3553 -7963 3553 -9344 
-Q 3553 -10719 3409 -11989 
-Q 3266 -13259 2920 -14501 
-Q 2575 -15744 1975 -16870 
-Q 1375 -17997 494 -18919 
-Q 456 -18938 453 -18938 
-L 269 -18938 
-z
-" transform="scale(0.015625)"/>
     </defs>
-    <use xlink:href="#Cmmi10-27" transform="translate(0 0.551601)"/>
-    <use xlink:href="#Cmr10-77" transform="translate(51.708984 0.551601)"/>
-    <use xlink:href="#Cmmi10-12" transform="translate(90.527344 0.551601)"/>
-    <use xlink:href="#Cmmi10-2c" transform="translate(137.451172 0.551601)"/>
-    <use xlink:href="#Cmmi10-52" transform="translate(185.136776 0.551601)"/>
-    <use xlink:href="#Cmr10-44" transform="translate(229.716854 0.551601)"/>
-    <use xlink:href="#Cmr10-29" transform="translate(288.535271 0.551601)"/>
-    <use xlink:href="#Cmr10-73" transform="translate(386.220875 0.551601)"/>
-    <use xlink:href="#Cmr10-84" transform="translate(436.220875 0.551601)"/>
-    <use xlink:href="#Cmr10-7b" transform="translate(475.332203 0.551601)"/>
-    <use xlink:href="#Cmr10-1c" transform="translate(519.716969 0.551601)"/>
-    <use xlink:href="#Cmr10-73" transform="translate(558.535328 0.551601)"/>
-    <use xlink:href="#Cmr10-74" transform="translate(608.535328 0.551601)"/>
-    <use xlink:href="#Cmex10-58" transform="translate(680.719954 147.634451) scale(0.836584)"/>
-    <use xlink:href="#Cmr10-1c" transform="translate(786.143355 76)"/>
-    <use xlink:href="#Cmr10-73" transform="translate(824.961714 76)"/>
-    <use xlink:href="#Cmr10-74" transform="translate(874.961714 76)"/>
-    <use xlink:href="#Cmr10-77" transform="translate(930.479292 76)"/>
-    <use xlink:href="#Cmmi10-51" transform="translate(969.297651 76)"/>
-    <use xlink:href="#Cmmi10-52" transform="translate(1021.299605 61.000038) scale(0.7)"/>
-    <use xlink:href="#Cmmi10-62" transform="translate(1058.226075 76)"/>
-    <use xlink:href="#Cmr10-31" transform="translate(1108.226075 76)"/>
-    <use xlink:href="#Cmr10-44" transform="translate(1158.226075 76)"/>
-    <use xlink:href="#Cmr10-7b" transform="translate(753.143355 -71.323399)"/>
-    <use xlink:href="#Cmr10-42" transform="translate(797.52812 -71.323399)"/>
-    <use xlink:href="#Cmr10-52" transform="translate(847.52812 -71.323399)"/>
-    <use xlink:href="#Cmr10-77" transform="translate(886.932417 -71.323399)"/>
-    <use xlink:href="#Cmmi10-12" transform="translate(925.750776 -71.323399)"/>
-    <use xlink:href="#Cmsy10-11" transform="translate(992.674662 -71.323399)"/>
-    <use xlink:href="#Cmmi10-d" transform="translate(1090.360266 -71.323399)"/>
-    <use xlink:href="#Cmmi10-52" transform="translate(1154.276282 -86.323361) scale(0.7)"/>
-    <use xlink:href="#Cmr10-44" transform="translate(1191.202752 -71.323399)"/>
-    <use xlink:href="#Cmex10-7e" transform="translate(1236.271111 147.634451) scale(0.836584)"/>
-    <path d="M 753.143355 22.426601 
-L 753.143355 28.676601 
-L 1230.021111 28.676601 
-L 1230.021111 22.426601 
-L 753.143355 22.426601 
-z
-"/>
+    <use xlink:href="#Cmmi10-27"/>
+    <use xlink:href="#Cmr10-77" transform="translate(51.708984 0)"/>
+    <use xlink:href="#Cmmi10-12" transform="translate(90.527344 0)"/>
+    <use xlink:href="#Cmmi10-2c" transform="translate(137.451172 0)"/>
+    <use xlink:href="#Cmmi10-52" transform="translate(185.136776 0)"/>
+    <use xlink:href="#Cmr10-44" transform="translate(229.716854 0)"/>
+    <use xlink:href="#Cmr10-29" transform="translate(288.535271 0)"/>
+    <use xlink:href="#Cmr10-73" transform="translate(386.220875 0)"/>
+    <use xlink:href="#Cmr10-1c" transform="translate(436.220875 0)"/>
+    <use xlink:href="#Cmr10-73" transform="translate(475.039234 0)"/>
+    <use xlink:href="#Cmr10-74" transform="translate(525.039234 0)"/>
+    <use xlink:href="#Cmr10-31" transform="translate(580.556812 0)"/>
+    <use xlink:href="#Cmr10-77" transform="translate(630.556812 -2.682774) scale(1.035734)"/>
+    <use xlink:href="#Cmr10-1c" transform="translate(670.758076 0)"/>
+    <use xlink:href="#Cmr10-73" transform="translate(709.576435 0)"/>
+    <use xlink:href="#Cmr10-74" transform="translate(759.576435 0)"/>
+    <use xlink:href="#Cmr10-77" transform="translate(815.094013 0)"/>
+    <use xlink:href="#Cmmi10-51" transform="translate(853.912373 0)"/>
+    <use xlink:href="#Cmmi10-52" transform="translate(905.914326 -14.999962) scale(0.7)"/>
+    <use xlink:href="#Cmmi10-62" transform="translate(942.840796 0)"/>
+    <use xlink:href="#Cmr10-31" transform="translate(992.840796 0)"/>
+    <use xlink:href="#Cmr10-44" transform="translate(1042.840796 0)"/>
+    <use xlink:href="#Cmmi10-2c" transform="translate(1081.659155 0)"/>
+    <use xlink:href="#Cmr10-7b" transform="translate(1162.677855 0)"/>
+    <use xlink:href="#Cmr10-42" transform="translate(1207.06262 0)"/>
+    <use xlink:href="#Cmr10-52" transform="translate(1257.06262 0)"/>
+    <use xlink:href="#Cmr10-77" transform="translate(1296.466917 0)"/>
+    <use xlink:href="#Cmmi10-12" transform="translate(1335.285277 0)"/>
+    <use xlink:href="#Cmsy10-11" transform="translate(1402.209162 0)"/>
+    <use xlink:href="#Cmmi10-d" transform="translate(1499.894766 0)"/>
+    <use xlink:href="#Cmmi10-52" transform="translate(1563.810782 -14.999962) scale(0.7)"/>
+    <use xlink:href="#Cmr10-44" transform="translate(1600.737252 0)"/>
+    <use xlink:href="#Cmr10-44" transform="translate(1639.555611 -2.682774) scale(1.035734)"/>
    </g>
   </g>
   <g id="text_3">
    <!-- $j(\theta) = \mathrm{argmin}_{\, q \in H}\ \rho(\theta, q)$ -->
-   <g style="fill: #0b1a2b" transform="translate(42.635 123.011547) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(64.485 123.011547) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-69" d="M -84 -909 
 Q -84 -753 23 -639 
@@ -1198,6 +1104,36 @@ Q 2547 3850 2433 3742
 Q 2319 3634 2181 3634 
 Q 2078 3634 2009 3706 
 Q 1941 3778 1941 3878 
+z
+" transform="scale(0.015625)"/>
+     <path id="Cmr10-84" d="M 166 0 
+L 166 225 
+Q 384 225 525 259 
+Q 666 294 666 428 
+L 666 2175 
+Q 666 2347 614 2423 
+Q 563 2500 466 2517 
+Q 369 2534 166 2534 
+L 166 2759 
+L 1081 2828 
+L 1081 2203 
+Q 1184 2481 1375 2654 
+Q 1566 2828 1838 2828 
+Q 2028 2828 2178 2715 
+Q 2328 2603 2328 2419 
+Q 2328 2303 2245 2217 
+Q 2163 2131 2041 2131 
+Q 1922 2131 1837 2215 
+Q 1753 2300 1753 2419 
+Q 1753 2591 1875 2663 
+L 1838 2663 
+Q 1578 2663 1414 2475 
+Q 1250 2288 1181 2009 
+Q 1113 1731 1113 1478 
+L 1113 428 
+Q 1113 225 1734 225 
+L 1734 0 
+L 166 0 
 z
 " transform="scale(0.015625)"/>
      <path id="Cmr10-1b" d="M 178 -500 
@@ -1405,7 +1341,7 @@ z
   </g>
   <g id="text_4">
    <!-- $V = \{\, q \in H : \exists\, \theta,\ j(\theta) = q \,\}$ -->
-   <g style="fill: #0b1a2b" transform="translate(35.13 177.884) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(56.98 177.884) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-7e" d="M 1409 -72 
 L 897 4006 
@@ -1488,7 +1424,7 @@ z
   </g>
   <g id="text_5">
    <!-- $A(E) = R^2 \int_{0}^{2\pi} \left( 1 - \cos r(\theta) \right)\, d\theta$ -->
-   <g style="fill: #0b1a2b" transform="translate(15.75 245.482) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(37.6 245.482) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-5c" d="M 288 0 
 Q 225 0 225 84 
@@ -1870,7 +1806,7 @@ z
   </g>
   <g id="text_6">
    <!-- $\min_{\theta}\ r(\theta) = \mathrm{isolation}(P)$ -->
-   <g style="fill: #0b1a2b" transform="translate(48.715 275.075547) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(70.565 275.075547) scale(0.19 -0.19)">
     <defs>
      <path id="Cmr10-6a" d="M 197 0 
 L 197 225 

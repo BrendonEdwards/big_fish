@@ -15,7 +15,7 @@ matplotlib.rcParams["mathtext.fontset"] = "cm"  # Computer Modern, academic look
 
 LINES = [
     r"$H(P) = \{\, q : h_q > h_P,\ \delta(P,q) > \varepsilon \,\}$",
-    r"$\rho(\theta, q) = \arctan\left( \dfrac{\tan(d_q / 2)}{\cos(\theta - \alpha_q)} \right)$",
+    r"$\rho(\theta, q) = \mathrm{atan2}\left( \tan(d_q / 2),\ \cos(\theta - \alpha_q) \right)$",
     r"$j(\theta) = \mathrm{argmin}_{\, q \in H}\ \rho(\theta, q)$",
     r"$V = \{\, q \in H : \exists\, \theta,\ j(\theta) = q \,\}$",
     r"$A(E) = R^2 \int_{0}^{2\pi} \left( 1 - \cos r(\theta) \right)\, d\theta$",
