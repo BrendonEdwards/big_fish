@@ -101,6 +101,14 @@ try {
   const chipCount = await page.evaluate(() => document.querySelectorAll('#jailer-chips .jailer-chip').length);
   if (chipCount < 1) throw new Error('expected jailer chips');
 
+  // spotlight validity for a previously-broken large-region summit
+  await clickSummitMarker(page, 'mont-blanc', [6.8652, 45.8326]);
+  await expectPanel(page, 'Mont Blanc');
+  const mbMask = await page.evaluate(() => window.__bigfish.map.getSource('spotlight-mask')._data.features.length);
+  if (mbMask !== 1) throw new Error(`expected 1 dimRegion feature for Mont Blanc, got ${mbMask}`);
+  const mbDimLayer = await page.evaluate(() => !!window.__bigfish.map.getLayer('spotlight-dim'));
+  if (!mbDimLayer) throw new Error('spotlight-dim layer missing for Mont Blanc');
+
   // rankings: open, re-sort, click through
   await page.click('#open-rankings');
   await page.waitForSelector('#rankings-dialog[open]');
@@ -130,6 +138,9 @@ try {
   await page.waitForSelector('#methodology-dialog[open]');
   const geekText = await page.textContent('#methodology-dialog');
   if (!/dominance region/.test(geekText)) throw new Error('data-geeks modal missing dominance region');
+  const bodyText = await page.evaluate(() => document.body.innerText);
+  if (/Edwards Polygon/i.test(bodyText)) throw new Error('stale Edwards Polygon text still present');
+  if (/rabbit hole/i.test(bodyText)) throw new Error('stale rabbit hole text still present');
   if (geekText.includes('—')) throw new Error('em dash found in data-geeks modal');
   const hasFormula = await page.evaluate(() => !!document.querySelector('#methodology-dialog .formula img'));
   if (!hasFormula) throw new Error('formula image missing');
@@ -207,6 +218,17 @@ try {
   if (!/Maxwell Montes/.test(nhnText)) throw new Error(`Everest NHN text: ${nhnText}`);
   const notesText = await page.textContent('#summit-notes');
   if (!/Olympus Mons/.test(notesText)) throw new Error('Everest notes missing the Olympus Mons explanation');
+
+  // collapse-toggle round-trip for hero and info panel
+  for (const selector of ['.hero', '#info-panel']) {
+    const button = await page.$(`${selector} .panel-collapse`);
+    await button.click();
+    const collapsed = await page.evaluate((s) => document.querySelector(s).classList.contains('collapsed'), selector);
+    if (!collapsed) throw new Error(`${selector} did not collapse`);
+    await button.click();
+    const expanded = await page.evaluate((s) => !document.querySelector(s).classList.contains('collapsed'), selector);
+    if (!expanded) throw new Error(`${selector} did not expand`);
+  }
 
   console.log(`SMOKE PASS (${baseUrl ? 'remote: ' + baseUrl : 'local dev server'})`);
 } finally {

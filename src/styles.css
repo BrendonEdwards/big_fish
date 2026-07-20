@@ -22,7 +22,7 @@ body { margin: 0; min-height: 100vh; overflow: hidden; }
 .hero h1 { margin: 0; font-size: clamp(2.25rem, 6vw, 5rem); line-height: .9; }
 .hero p { margin: .5rem 0 0; color: #c9d8e8; }
 .eyebrow { color: #8bd3ff !important; font-size: .78rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
-.info-panel { right: 1rem; bottom: 1rem; padding: 1rem; }
+.info-panel { right: 1rem; bottom: 1rem; padding: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
 .info-panel h2 { margin: 0 0 .75rem; }
 dl { display: grid; gap: .75rem; margin: 0; }
 dt { color: #8bd3ff; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }

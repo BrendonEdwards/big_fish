@@ -31,8 +31,9 @@ default sort, a log-normalised measure of surprising isolation), and a 3D
 terrain toggle drapes the map over AWS Terrarium elevation tiles, and a
 Flat map toggle switches the projection between globe and Web Mercator. A
 "For the data geeks" modal explains the GIS data sourcing and isolation
-methodology for a GIS-literate audience, including the Edwards Polygon
-definition.
+methodology for a GIS-literate audience, including the dominance region
+definition. The hero title bar and the info panel are each collapsible
+via a small toggle button, for a less cluttered view of the map.
 
 To regenerate `public/data/jailers.json` (one-time ~400 MB GeoNames
 download, cached in `scripts/.cache/`):
