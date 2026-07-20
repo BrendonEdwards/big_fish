@@ -144,20 +144,6 @@ function spokeFeatures(summitId) {
   }));
 }
 
-function spotlightMaskFeatures(summitId) {
-  const ring = jailersData?.summits?.[summitId]?.ring;
-  if (!ring) return [];
-  // World rectangle with the ring's outer boundary(ies) punched out as holes,
-  // so everything outside the ring dims. Aconcagua's ring already spans the
-  // globe (a world-with-hole polygon), so its outer boundary punches the whole
-  // world and nothing dims — correct: its dominion is essentially the planet.
-  const holes = ring.type === 'MultiPolygon'
-    ? ring.coordinates.map((polygon) => polygon[0])
-    : [ring.coordinates[0]];
-  const world = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
-  return [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [world, ...holes] } }];
-}
-
 function jailerPointFeatures(summitId) {
   const data = jailersData?.summits?.[summitId];
   if (!data) return [];
@@ -188,7 +174,9 @@ function refreshOverlays() {
   map.getSource('jailer-ring').setData(collection(
     data?.ring ? [{ type: 'Feature', properties: { summitId: active.id }, geometry: data.ring }] : [],
   ));
-  map.getSource('spotlight-mask').setData(collection(visible && data?.ring ? spotlightMaskFeatures(active.id) : []));
+  map.getSource('spotlight-mask').setData(collection(
+    visible && data?.dimRegion ? [{ type: 'Feature', properties: {}, geometry: data.dimRegion }] : [],
+  ));
   map.getSource('jailer-points').setData(collection(visible ? jailerPointFeatures(active.id) : []));
 }
 
