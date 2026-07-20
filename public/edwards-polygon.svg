@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="333.6pt" height="295.385547pt" viewBox="0 0 333.6 295.385547" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="333.6pt" height="354.425547pt" viewBox="0 0 333.6 354.425547" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-07-20T14:05:03.730411</dc:date>
+    <dc:date>2026-07-20T14:32:01.252328</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -21,11 +21,11 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M -0 295.385547 
-L 333.6 295.385547 
+   <path d="M -0 354.425547 
+L 333.6 354.425547 
 L 333.6 0 
 L -0 0 
-L -0 295.385547 
+L -0 354.425547 
 z
 " style="fill: none; opacity: 0"/>
   </g>
@@ -556,7 +556,7 @@ z
   </g>
   <g id="text_2">
    <!-- $\rho(\theta, q) = \mathrm{atan2}\left( \tan(d_q / 2),\ \cos(\theta - \alpha_q) \right)$ -->
-   <g style="fill: #0b1a2b" transform="translate(7.2 72.323547) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(7.2 84.131547) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-27" d="M 178 -1203 
 Q 178 -1166 184 -1153 
@@ -1062,7 +1062,7 @@ z
   </g>
   <g id="text_3">
    <!-- $j(\theta) = \mathrm{argmin}_{\, q \in H}\ \rho(\theta, q)$ -->
-   <g style="fill: #0b1a2b" transform="translate(64.485 123.011547) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(64.485 146.627547) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-69" d="M -84 -909 
 Q -84 -753 23 -639 
@@ -1341,7 +1341,7 @@ z
   </g>
   <g id="text_4">
    <!-- $V = \{\, q \in H : \exists\, \theta,\ j(\theta) = q \,\}$ -->
-   <g style="fill: #0b1a2b" transform="translate(56.98 177.884) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(56.98 213.308) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-7e" d="M 1409 -72 
 L 897 4006 
@@ -1424,7 +1424,7 @@ z
   </g>
   <g id="text_5">
    <!-- $A(E) = R^2 \int_{0}^{2\pi} \left( 1 - \cos r(\theta) \right)\, d\theta$ -->
-   <g style="fill: #0b1a2b" transform="translate(37.6 245.482) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(37.6 292.714) scale(0.19 -0.19)">
     <defs>
      <path id="Cmmi10-5c" d="M 288 0 
 Q 225 0 225 84 
@@ -1806,7 +1806,7 @@ z
   </g>
   <g id="text_6">
    <!-- $\min_{\theta}\ r(\theta) = \mathrm{isolation}(P)$ -->
-   <g style="fill: #0b1a2b" transform="translate(70.565 275.075547) scale(0.19 -0.19)">
+   <g style="fill: #0b1a2b" transform="translate(70.565 334.115547) scale(0.19 -0.19)">
     <defs>
      <path id="Cmr10-6a" d="M 197 0 
 L 197 225 

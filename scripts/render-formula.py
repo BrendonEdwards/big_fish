@@ -22,12 +22,12 @@ LINES = [
     r"$\min_{\theta}\ r(\theta) = \mathrm{isolation}(P)$",
 ]
 
-fig = plt.figure(figsize=(6.2, 4.4))
+fig = plt.figure(figsize=(6.2, 5.6))
 fig.patch.set_alpha(0.0)
-y = 0.94
+y = 0.96
 for line in LINES:
     fig.text(0.5, y, line, ha="center", va="top", fontsize=19, color="#0b1a2b")
-    y -= 0.16
+    y -= 0.155
 out = Path(__file__).resolve().parent.parent / "public" / "edwards-polygon.svg"
 fig.savefig(out, format="svg", bbox_inches="tight", transparent=True)
 print(f"wrote {out}")
