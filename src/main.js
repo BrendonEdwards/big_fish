@@ -1,6 +1,7 @@
 import { initRankings } from './rankings.js';
 
 const MAX_TILE_ZOOM = 19;
+const SPOTLIGHT_OPACITY = 0.6;
 const SATELLITE_STYLE = {
   version: 8,
   projection: { type: 'globe' },
@@ -138,6 +139,20 @@ function spokeFeatures(summitId) {
   }));
 }
 
+function spotlightMaskFeatures(summitId) {
+  const ring = jailersData?.summits?.[summitId]?.ring;
+  if (!ring) return [];
+  // World rectangle with the ring's outer boundary(ies) punched out as holes,
+  // so everything outside the ring dims. Aconcagua's ring already spans the
+  // globe (a world-with-hole polygon), so its outer boundary punches the whole
+  // world and nothing dims — correct: its dominion is essentially the planet.
+  const holes = ring.type === 'MultiPolygon'
+    ? ring.coordinates.map((polygon) => polygon[0])
+    : [ring.coordinates[0]];
+  const world = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
+  return [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [world, ...holes] } }];
+}
+
 function jailerPointFeatures(summitId) {
   const data = jailersData?.summits?.[summitId];
   if (!data) return [];
@@ -158,6 +173,7 @@ function refreshOverlays() {
     map.getSource('jailer-spokes').setData(collection(features));
     map.getSource('jailer-ring').setData(collection([]));
     map.getSource('jailer-points').setData(collection([]));
+    map.getSource('spotlight-mask').setData(collection([]));
     return;
   }
   const active = summits.find((summit) => summit.id === activeSummitId);
@@ -167,6 +183,7 @@ function refreshOverlays() {
   map.getSource('jailer-ring').setData(collection(
     data?.ring ? [{ type: 'Feature', properties: { summitId: active.id }, geometry: data.ring }] : [],
   ));
+  map.getSource('spotlight-mask').setData(collection(visible && data?.ring ? spotlightMaskFeatures(active.id) : []));
   map.getSource('jailer-points').setData(collection(visible ? jailerPointFeatures(active.id) : []));
 }
 
@@ -207,8 +224,10 @@ map.on('load', () => {
 
   map.addSource('jailer-spokes', { type: 'geojson', data: collection([]) });
   map.addSource('jailer-ring', { type: 'geojson', data: collection([]) });
+  map.addSource('spotlight-mask', { type: 'geojson', data: collection([]) });
   map.addSource('jailer-points', { type: 'geojson', data: collection([]) });
   const spokeColor = ['interpolate', ['linear'], ['get', 'distanceKm'], 1500, '#ffb703', 6000, '#8ecae6', 12000, '#48b8ff'];
+  map.addLayer({ id: 'spotlight-dim', type: 'fill', source: 'spotlight-mask', paint: { 'fill-color': '#000000', 'fill-opacity': SPOTLIGHT_OPACITY } }, 'ring-fill');
   map.addLayer({ id: 'ring-fill', type: 'fill', source: 'jailer-ring', paint: { 'fill-color': '#48b8ff', 'fill-opacity': 0.06 } });
   map.addLayer({ id: 'ring-outline', type: 'line', source: 'jailer-ring', paint: { 'line-color': '#48b8ff', 'line-width': 1.2, 'line-opacity': 0.7 } });
   map.addLayer({ id: 'spokes-glow-outer', type: 'line', source: 'jailer-spokes', layout: { 'line-cap': 'round' }, paint: { 'line-color': spokeColor, 'line-width': 10, 'line-opacity': 0.1, 'line-blur': 6 } });
@@ -355,6 +374,7 @@ function resetInfoPanel() {
   activePopup?.remove();
   map.getSource('jailer-spokes')?.setData(collection([]));
   map.getSource('jailer-ring')?.setData(collection([]));
+  map.getSource('spotlight-mask')?.setData(collection([]));
   map.getSource('jailer-points')?.setData(collection([]));
   document.querySelector('#summit-computed').textContent = '—';
   document.querySelector('#summit-area').textContent = '—';

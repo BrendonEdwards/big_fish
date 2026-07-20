@@ -86,6 +86,8 @@ try {
   // ring + stats + chips
   const ringCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-ring')._data.features.length);
   if (ringCount !== 1) throw new Error(`expected 1 ring feature, got ${ringCount}`);
+  const maskCount = await page.evaluate(() => window.__bigfish.map.getSource('spotlight-mask')._data.features.length);
+  if (maskCount !== 1) throw new Error(`expected 1 spotlight-mask feature for Kilimanjaro, got ${maskCount}`);
   const areaText = await page.textContent('#summit-area');
   if (!/km²/.test(areaText)) throw new Error(`unexpected ring area text: ${areaText}`);
   const chipCount = await page.evaluate(() => document.querySelectorAll('#jailer-chips .jailer-chip').length);
@@ -110,6 +112,8 @@ try {
   await page.waitForTimeout(500);
   const webSpokes = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
   if (webSpokes < 100) throw new Error(`expected many web-mode spokes, got ${webSpokes}`);
+  const webMask = await page.evaluate(() => window.__bigfish.map.getSource('spotlight-mask')._data.features.length);
+  if (webMask !== 0) throw new Error(`expected no spotlight-mask in web mode, got ${webMask}`);
   // rankings click-through may have selected a different summit and moved the
   // camera — re-click Kilimanjaro's marker so its point is on-screen for the hover check
   await clickSummitMarker(page, 'kilimanjaro', [37.36, -3.07]);
@@ -156,6 +160,8 @@ try {
   );
   const spokeCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
   if (spokeCount !== 0) throw new Error('expected empty spokes source for Everest');
+  const everestMask = await page.evaluate(() => window.__bigfish.map.getSource('spotlight-mask')._data.features.length);
+  if (everestMask !== 0) throw new Error('expected no spotlight-mask for Everest');
 
   console.log(`SMOKE PASS (${baseUrl ? 'remote: ' + baseUrl : 'local dev server'})`);
 } finally {
