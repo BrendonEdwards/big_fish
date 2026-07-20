@@ -33,7 +33,7 @@
         </fieldset>
         <label class="terrain-control"><input id="terrain-toggle" type="checkbox" /> 3D terrain</label>
         <button id="open-rankings" type="button" class="rankings-button">Rankings</button>
-        <button id="open-methodology" type="button" class="rankings-button">Methodology</button>
+        <button id="open-methodology" type="button" class="rankings-button">For the data geeks</button>
         <label class="filter-control" for="isolation-filter">
           <span>Min isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
@@ -68,21 +68,39 @@
           </table>
         </div>
       </dialog>
-      <dialog id="methodology-dialog" aria-label="Methodology">
-        <h2>Methodology</h2>
+      <dialog id="methodology-dialog" aria-label="For the data geeks">
+        <h2>For the data geeks</h2>
         <div class="prose-scroll">
-          <h3>What this shows</h3>
-          <p>The 40 most topographically isolated summits on Earth (source: Wikipedia, "Topographic isolation"). For each summit you see its <em>jailers</em> — the higher peaks that hem it in — and its dominance ring.</p>
-          <h3>Isolation &amp; jailers</h3>
-          <p>Topographic isolation is the great-circle distance from a summit to the nearest higher point. Here "higher point" means the nearest higher <em>catalogued peak</em>. A <em>jailer</em> is a higher peak that guards at least one of 1,440 compass bearings (every 0.25°) sampled around the summit; each bearing is won by the higher peak with the smallest angular-offset-weighted distance. The nearest higher neighbour is the shortest spoke, and its length is the isolation.</p>
-          <h3>Dominance ring</h3>
-          <p>The ring is the polygon whose vertices are the jailers, joined in bearing order by hub-bearing-interpolated arcs, so it is star-shaped and never self-intersects. Its area is computed by a closed-form spherical integral. The most isolated peaks produce near-global rings — Aconcagua's is the whole world minus a small antipodal cap.</p>
-          <h3>Underdog Index</h3>
-          <p>Ring area (km²) ÷ summit height (m), log-normalised to a 0–100 score across the ranked summits. It rewards modest peaks that dominate vast territory per metre of their own height — a 13 m atoll high point scores ~100, while towering, equally-dominant giants score far lower.</p>
-          <h3>Data &amp; caveats</h3>
-          <p>Higher peaks come from the GeoNames <code>allCountries</code> gazetteer (feature codes PK, PKS, MT, VLC, HLL), with a stale-elevation guard (rejecting entries whose listed elevation exceeds the DEM by more than 1,000 m) and two corrected summit coordinates (Mascarin Peak → Marion Island; Joe's Hill → Kiritimati). Catalogue coverage is thinnest near sea level, so low-lying summits reflect the nearest higher <em>catalogued</em> peak rather than a DEM-traced ridge.</p>
+          <h3>The Edwards Polygon</h3>
+          <p>Topographic isolation reduces a summit to a single number: the distance to its nearest higher neighbour. The Edwards Polygon generalises that number into a two dimensional region, the ground a summit owns before higher terrain takes over, bounded by the higher peaks that surround it.</p>
+          <figure class="formula"><img src="/edwards-polygon.svg" alt="Edwards Polygon formal definition" /></figure>
+          <p>P is the summit at elevation h_P. H(P) is the set of catalogued peaks strictly higher than P and beyond a 2 km self exclusion. For each higher peak q at angular distance d_q and bearing alpha_q, and for each of 1,440 compass bearings theta (every 0.25 degrees), rho selects the higher peak that most tightly bounds that bearing. The winners V are the summit's higher neighbours and the polygon's vertices; the boundary is swept through them, and its area follows the spherical integral above. The narrowest radius equals the topographic isolation.</p>
+          <h3>How it differs from Voronoi and Thiessen</h3>
+          <p>A Voronoi or Thiessen boundary falls halfway between points. The Edwards Polygon boundary runs through the higher peaks themselves, because they are its vertices. It is ego centric (one summit's region, not a global tessellation), its generators are attribute filtered (only higher peaks qualify), and its narrowest radius is the isolation distance. It is built on established parts, spherical Voronoi and Delaunay neighbours and topographic isolation. The named polygon, and its use as an isolation region, is the new part.</p>
+          <h3>Copy the definition</h3>
+          <p>LaTeX source, for anyone who wants to reproduce or extend it:</p>
+          <pre id="formula-source"><code>H(P) = \{\, q : h_q &gt; h_P,\ \delta(P,q) &gt; \varepsilon \,\}
+\rho(\theta,q) = \operatorname{atan2}\!\left(\tan(d_q/2),\ \cos(\theta-\alpha_q)\right)
+j(\theta) = \operatorname*{arg\,min}_{q \in H}\ \rho(\theta,q)
+V = \{\, q \in H : \exists\, \theta,\ j(\theta)=q \,\}
+E(P) = \text{spherical polygon through } V \text{ ordered by } \alpha
+A(E) = R^2 \int_{0}^{2\pi}\bigl(1-\cos r(\theta)\bigr)\,d\theta
+\min_{\theta} r(\theta) = \operatorname{isolation}(P)</code></pre>
+          <button id="copy-formula" type="button" class="rankings-button">Copy LaTeX</button>
+          <h3>Extend it</h3>
+          <p>The same construction applies to all catalogued peaks rather than these 40, to submarine seamounts, to base to peak height instead of sea level elevation, and to other planetary bodies.</p>
+          <h3>A note on the name</h3>
+          <p>There is no naming committee for polygons, which is precisely how this one came to be called the Edwards Polygon. Voronoi and Thiessen did the difficult mathematics. The author supplied only the ego.</p>
+          <h3>Isolation and higher neighbours</h3>
+          <p>Isolation is the great circle distance to the nearest higher catalogued peak, which is the shortest spoke. Each of the 1,440 bearings is won by the higher peak that most tightly bounds it; the winners are the summit's higher neighbours and the polygon's vertices.</p>
+          <h3>Reading the map</h3>
+          <p>Spokes run from the summit (the hub) to each higher neighbour, coloured by distance; the nearest is the isolation. The shaded region is the Edwards Polygon. Web mode shows every summit's spokes at once.</p>
+          <h3>Why Aconcagua looks like the whole world with a hole</h3>
+          <p>Aconcagua's higher neighbours are all clustered in one direction, the Himalaya and Karakoram, thousands of km away across Asia. With no higher ground in any other direction, its dominance region wraps almost the entire planet and leaves only a small excluded cap near its antipode. That is why its Edwards Polygon renders as the world minus a hole, and why it tops the dominance area ranking.</p>
+          <h3>Data and caveats</h3>
+          <p>Higher peaks come from the GeoNames allCountries gazetteer (feature codes PK, PKS, MT, VLC, HLL), with a stale elevation guard (rejecting entries whose listed elevation exceeds the DEM by more than 1,000 m) and two corrected coordinates (Mascarin Peak to Marion Island; Joe's Hill to Kiritimati). Coverage is thinnest near sea level and over Antarctica, so a few summits (for example Mawson Peak) reflect the nearest higher catalogued peak rather than a terrain traced ridge, and can differ from the Wikipedia figure.</p>
           <h3>Rendering</h3>
-          <p>MapLibre GL JS globe projection, Esri World Imagery basemap, optional AWS Terrarium 3D terrain.</p>
+          <p>MapLibre GL JS, globe or Web Mercator projection, Esri World Imagery, optional AWS Terrarium 3D terrain.</p>
         </div>
       </dialog>
     </main>

@@ -101,3 +101,7 @@ dd { margin: .1rem 0 0; color: #fff; }
 #methodology-dialog h3 { margin: 1rem 0 .25rem; color: #8bd3ff; font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; }
 #methodology-dialog p { margin: 0 0 .5rem; color: #c9d8e8; line-height: 1.5; font-size: .9rem; }
 #methodology-dialog code { color: #ffe0a3; }
+#methodology-dialog .formula { margin: .75rem 0; padding: 1rem; background: #f4f7fb; border-radius: .6rem; text-align: center; }
+#methodology-dialog .formula img { max-width: 100%; height: auto; }
+#methodology-dialog #formula-source { max-height: 12rem; overflow: auto; background: rgb(255 255 255 / 6%); border: 1px solid rgb(255 255 255 / 12%); border-radius: .5rem; padding: .6rem .8rem; color: #cfe0f0; font-size: .78rem; white-space: pre; }
+#methodology-dialog #copy-formula { margin: .5rem 0 0; width: auto; padding: .4rem .9rem; }
