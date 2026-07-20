@@ -88,3 +88,13 @@ dd { margin: .1rem 0 0; color: #fff; }
 #rankings-dialog th[data-metric].active { color: #ffd166; }
 #rankings-dialog tbody tr { cursor: pointer; }
 #rankings-dialog tbody tr:hover { background: rgb(72 184 255 / 10%); }
+#methodology-dialog {
+  border: 1px solid rgb(255 255 255 / 14%); border-radius: 1rem; background: rgb(7 17 31 / 96%);
+  color: #f8fbff; padding: 1.25rem; width: min(44rem, 92vw);
+}
+#methodology-dialog::backdrop { background: rgb(0 0 0 / 55%); }
+#methodology-dialog .prose-scroll { max-height: 66vh; overflow: auto; }
+#methodology-dialog h2 { margin: 0 0 .5rem; }
+#methodology-dialog h3 { margin: 1rem 0 .25rem; color: #8bd3ff; font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; }
+#methodology-dialog p { margin: 0 0 .5rem; color: #c9d8e8; line-height: 1.5; font-size: .9rem; }
+#methodology-dialog code { color: #ffe0a3; }

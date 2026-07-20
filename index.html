@@ -32,6 +32,7 @@
         </fieldset>
         <label class="terrain-control"><input id="terrain-toggle" type="checkbox" /> 3D terrain</label>
         <button id="open-rankings" type="button" class="rankings-button">Rankings</button>
+        <button id="open-methodology" type="button" class="rankings-button">Methodology</button>
         <label class="filter-control" for="isolation-filter">
           <span>Min isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
@@ -63,6 +64,23 @@
             </thead>
             <tbody></tbody>
           </table>
+        </div>
+      </dialog>
+      <dialog id="methodology-dialog" aria-label="Methodology">
+        <h2>Methodology</h2>
+        <div class="prose-scroll">
+          <h3>What this shows</h3>
+          <p>The 40 most topographically isolated summits on Earth (source: Wikipedia, "Topographic isolation"). For each summit you see its <em>jailers</em> — the higher peaks that hem it in — and its dominance ring.</p>
+          <h3>Isolation &amp; jailers</h3>
+          <p>Topographic isolation is the great-circle distance from a summit to the nearest higher point. Here "higher point" means the nearest higher <em>catalogued peak</em>. A <em>jailer</em> is a higher peak that guards at least one of 1,440 compass bearings (every 0.25°) sampled around the summit; each bearing is won by the higher peak with the smallest angular-offset-weighted distance. The nearest higher neighbour is the shortest spoke, and its length is the isolation.</p>
+          <h3>Dominance ring</h3>
+          <p>The ring is the polygon whose vertices are the jailers, joined in bearing order by hub-bearing-interpolated arcs, so it is star-shaped and never self-intersects. Its area is computed by a closed-form spherical integral. The most isolated peaks produce near-global rings — Aconcagua's is the whole world minus a small antipodal cap.</p>
+          <h3>Underdog Index</h3>
+          <p>Ring area (km²) ÷ summit height (m), log-normalised to a 0–100 score across the ranked summits. It rewards modest peaks that dominate vast territory per metre of their own height — a 13 m atoll high point scores ~100, while towering, equally-dominant giants score far lower.</p>
+          <h3>Data &amp; caveats</h3>
+          <p>Higher peaks come from the GeoNames <code>allCountries</code> gazetteer (feature codes PK, PKS, MT, VLC, HLL), with a stale-elevation guard (rejecting entries whose listed elevation exceeds the DEM by more than 1,000 m) and two corrected summit coordinates (Mascarin Peak → Marion Island; Joe's Hill → Kiritimati). Catalogue coverage is thinnest near sea level, so low-lying summits reflect the nearest higher <em>catalogued</em> peak rather than a DEM-traced ridge.</p>
+          <h3>Rendering</h3>
+          <p>MapLibre GL JS globe projection, Esri World Imagery basemap, optional AWS Terrarium 3D terrain.</p>
         </div>
       </dialog>
     </main>
