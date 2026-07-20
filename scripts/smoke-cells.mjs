@@ -158,10 +158,6 @@ try {
   // Real click on Everest's marker: selectable, but no jailers
   await clickSummitMarker(page, 'everest', [86.93, 27.99]);
   await expectPanel(page, 'Mount Everest');
-  await page.waitForFunction(
-    () => document.querySelector('#summit-computed').textContent.includes('No jailers'),
-    null, { timeout: 15000 },
-  );
   const spokeCount = await page.evaluate(() => window.__bigfish.map.getSource('jailer-spokes')._data.features.length);
   if (spokeCount !== 0) throw new Error('expected empty spokes source for Everest');
   const everestMask = await page.evaluate(() => window.__bigfish.map.getSource('spotlight-mask')._data.features.length);

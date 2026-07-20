@@ -417,6 +417,21 @@ function updateSelectedOverlays(summit) {
 
 function renderJailerDetails(summit) {
   const data = jailersData?.summits?.[summit.id];
+
+  if (summit.id === 'everest') {
+    document.querySelector('#summit-computed').textContent = '~38 million km (at closest approach)';
+    document.querySelector('#summit-nhn').textContent = 'Maxwell Montes, Venus (~11 km)';
+    document.querySelector('#summit-area').textContent = '—';
+    document.querySelector('#summit-mean-spoke').textContent = '—';
+    document.querySelector('#summit-notes').textContent =
+      'Nothing on Earth is higher, so Everest\'s nearest higher neighbour is off-world. '
+      + 'Most people picture Mars and Olympus Mons (~22 km, the solar system\'s tallest), '
+      + 'but Venus makes the closest planetary approaches to Earth (~38M km vs Mars\'s ~55M km), '
+      + 'and its Maxwell Montes (~11 km) already tops Everest — so Venus, not Mars, holds the title.';
+    document.querySelector('#jailer-chips').replaceChildren();
+    return;
+  }
+
   const computed = document.querySelector('#summit-computed');
   if (jailersData === null) computed.textContent = 'Jailer data unavailable';
   else if (!data) computed.textContent = 'No jailers — nothing higher';
