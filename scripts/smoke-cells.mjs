@@ -133,6 +133,13 @@ try {
   if (geekText.includes('—')) throw new Error('em dash found in data-geeks modal');
   const hasFormula = await page.evaluate(() => !!document.querySelector('#methodology-dialog .formula img'));
   if (!hasFormula) throw new Error('formula image missing');
+  const formulaLoaded = await page.evaluate(async () => {
+    const img = document.querySelector('#methodology-dialog .formula img');
+    if (img.complete) return img.naturalWidth > 0;
+    await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
+    return img.naturalWidth > 0;
+  });
+  if (!formulaLoaded) throw new Error('formula image failed to load (check /edwards-polygon.svg path)');
   await page.keyboard.press('Escape');
   const panelText = await page.textContent('#info-panel');
   if (panelText.includes('—')) throw new Error('em dash found in info panel');
