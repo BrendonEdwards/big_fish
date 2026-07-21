@@ -1,4 +1,4 @@
-# Big Fish
+# The Loneliest Peaks
 
 Topographical isolation explorer for the 40 most topographically isolated summits on Earth. The app uses WGS84 longitude/latitude summit data with MapLibre GL JS rather than a custom `THREE.Scene`, `SphereGeometry`, and raycaster stack, so peak markers, nearest-higher-neighbour (NHN) points, isolation circles, and summit-to-NHN arcs are all rendered as geographically anchored map layers.
 
@@ -26,8 +26,14 @@ polygon whose vertices are the jailers themselves. The shortest spoke is
 the nearest higher neighbour; its length is the summit's isolation. A Web
 mode shows every summit's spokes at once with hover highlighting, the
 panel lists jailers as fly-to chips, a Rankings popup sorts summits by
-ring area / jailer count / mean spoke / isolation, and a 3D terrain toggle
-drapes the map over AWS Terrarium elevation tiles.
+ring area / jailer count / mean spoke / isolation / Underdog Index (the
+default sort, a log-normalised measure of surprising isolation), and a 3D
+terrain toggle drapes the map over AWS Terrarium elevation tiles, and a
+Flat map toggle switches the projection between globe and Web Mercator. A
+"For the data geeks" modal explains the GIS data sourcing and isolation
+methodology for a GIS-literate audience, including the dominance region
+definition. The hero title bar and the info panel are each collapsible
+via a small toggle button, for a less cluttered view of the map.
 
 To regenerate `public/data/jailers.json` (one-time ~400 MB GeoNames
 download, cached in `scripts/.cache/`):

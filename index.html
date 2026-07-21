@@ -3,35 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Big Fish — Topographical Isolation</title>
+    <title>The Loneliest Peaks: Topographical Isolation</title>
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
     <main id="app">
       <section class="hero" aria-label="Application title">
+        <button class="panel-collapse" type="button" aria-expanded="true" aria-label="Collapse panel">–</button>
         <p class="eyebrow">Topographical isolation</p>
-        <h1>Big Fish</h1>
-        <p>Explore high-prominence summits, the jailers that hem them in, and the spokes that measure their isolation.</p>
+        <h1>The Loneliest Peaks</h1>
+        <p>Explore high-prominence summits, the higher peaks that hem them in, and the spokes that measure their isolation.</p>
+        <p class="source-link">Inspired by Wikipedia's <a href="https://en.wikipedia.org/wiki/Topographic_isolation" target="_blank" rel="noopener">Topographic isolation</a> article.</p>
       </section>
 
       <aside id="info-panel" class="info-panel" aria-live="polite">
+        <button class="panel-collapse" type="button" aria-expanded="true" aria-label="Collapse panel">–</button>
         <h2 id="summit-name">Select a summit</h2>
         <dl>
-          <div><dt>Elevation</dt><dd id="summit-elevation">—</dd></div>
-          <div><dt>Nearest higher neighbour</dt><dd id="summit-nhn">—</dd></div>
-          <div><dt>Isolation</dt><dd id="summit-isolation">—</dd></div>
-          <div><dt>Computed isolation</dt><dd id="summit-computed">—</dd></div>
-          <div><dt>Ring area</dt><dd id="summit-area">—</dd></div>
-          <div><dt>Mean spoke</dt><dd id="summit-mean-spoke">—</dd></div>
+          <div><dt>Elevation</dt><dd id="summit-elevation">–</dd></div>
+          <div><dt>Nearest higher neighbour</dt><dd id="summit-nhn">–</dd></div>
+          <div><dt>Isolation</dt><dd id="summit-isolation">–</dd></div>
+          <div><dt>Higher neighbours</dt><dd id="summit-neighbours">–</dd></div>
+          <div><dt>Dominance region</dt><dd id="summit-area">–</dd></div>
+          <div><dt>Mean spoke</dt><dd id="summit-mean-spoke">–</dd></div>
         </dl>
-        <div id="jailer-chips" aria-label="Jailers by distance"></div>
+        <div id="jailer-chips" aria-label="Higher neighbours by distance"></div>
         <fieldset class="mode-control" aria-label="Display mode">
           <label><input type="radio" name="display-mode" value="selected" checked /> Selected</label>
           <label><input type="radio" name="display-mode" value="web" /> Web</label>
         </fieldset>
         <label class="terrain-control"><input id="terrain-toggle" type="checkbox" /> 3D terrain</label>
+        <label class="terrain-control"><input id="projection-toggle" type="checkbox" /> Flat map</label>
         <button id="open-rankings" type="button" class="rankings-button">Rankings</button>
+        <button id="open-methodology" type="button" class="rankings-button">For the data geeks</button>
         <label class="filter-control" for="isolation-filter">
           <span>Min isolation</span>
           <output id="isolation-filter-value" for="isolation-filter">0 km</output>
@@ -42,26 +47,73 @@
           <output id="isolation-filter-max-value" for="isolation-filter-max">0 km</output>
           <input id="isolation-filter-max" type="range" min="0" max="1000" step="1" value="1000" />
         </label>
-        <p id="summit-notes">Click a peak marker to see its ring of jailers.</p>
-        <p class="data-note">Jailer data derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
+        <p id="summit-notes">Click a peak marker to see its higher neighbours.</p>
+        <p class="data-note">Higher-neighbour data derived from GeoNames catalogued peaks; coverage is thinnest near sea level.</p>
       </aside>
 
       <div id="map" aria-label="Interactive globe map"></div>
       <dialog id="rankings-dialog" aria-label="Summit rankings">
         <h2>Rankings</h2>
+        <p class="rankings-legend">Underdog Index: dominance per metre of height (0 to 100). Dominance region: km² of the ground the summit owns before higher terrain takes over. Higher neighbours: count of higher peaks bounding it. Mean spoke: average distance to them. Isolation: distance to the nearest higher peak.</p>
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
                 <th>#</th><th>Summit</th>
-                <th data-metric="ringAreaKm2" class="active">Ring area (km²)</th>
-                <th data-metric="jailerCount">Jailers</th>
-                <th data-metric="meanSpokeKm">Mean spoke (km)</th>
-                <th data-metric="isolationKm">Isolation (km)</th>
+                <th data-metric="underdogIndex" class="active" title="Dominance per metre of height, log-normalised 0 to 100">Underdog Index</th>
+                <th data-metric="ringAreaKm2" title="Area of the summit's dominance region">Dominance region (km²)</th>
+                <th data-metric="jailerCount" title="Count of higher peaks that bound the summit">Higher neighbours</th>
+                <th data-metric="meanSpokeKm" title="Average distance to those higher peaks">Mean spoke (km)</th>
+                <th data-metric="isolationKm" title="Distance to the nearest higher peak">Isolation (km)</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
+        </div>
+      </dialog>
+      <dialog id="methodology-dialog" aria-label="For the data geeks">
+        <h2>For the data geeks</h2>
+        <div class="prose-scroll">
+          <h3>The dominance region</h3>
+          <p>Topographic isolation reduces a summit to a single number: the distance to its nearest higher neighbour. The dominance region generalises that number into a two dimensional region, the ground a summit owns before higher terrain takes over, bounded by the higher peaks that surround it.</p>
+          <h3>See how a summit picks its higher neighbours</h3>
+          <p>Looking straight down on a summit (amber, centre). Every other dot is a higher peak. Each compass direction is awarded to whichever higher peak is nearest that way, so each surviving peak owns a wedge of directions and becomes a vertex of the region. The faint line at right angles across each spoke is that peak's perpendicular bisector, the halfway boundary the direction has to reach it. Drag any peak: park it behind a nearer one and it wins nothing; slide it to the side and it carves out its own wedge.</p>
+          <div id="dominance-explainer-board" class="de-board">
+            <canvas id="dominance-explainer" width="720" height="720" aria-label="Top-down diagram of a summit and the higher peaks around it"></canvas>
+          </div>
+          <div class="de-controls">
+            <button id="de-reset" type="button" class="rankings-button">Reset</button>
+            <button id="de-shadow" type="button" class="rankings-button">Show a peak in shadow</button>
+            <button id="de-spread" type="button" class="rankings-button">Spread them out</button>
+            <button id="de-bisectors" type="button" class="rankings-button" aria-pressed="true">Perpendicular bisectors: on</button>
+          </div>
+          <dl class="de-readout" id="de-readout"></dl>
+          <figure class="formula"><img src="/edwards-polygon.svg" alt="Dominance region formal definition" /></figure>
+          <p>P is the summit at elevation h_P. H(P) is the set of catalogued peaks strictly higher than P and beyond a 2 km self exclusion. For each higher peak q at angular distance d_q and bearing alpha_q, and for each of 1,440 compass bearings theta (every 0.25 degrees), rho selects the higher peak that most tightly bounds that bearing. The winners V are the summit's higher neighbours and the polygon's vertices; the boundary is swept through them, and its area follows the spherical integral above. The narrowest radius equals the topographic isolation.</p>
+          <h3>How it differs from Voronoi and Thiessen</h3>
+          <p>A Voronoi or Thiessen boundary falls halfway between points. The dominance region boundary runs through the higher peaks themselves, because they are its vertices. It is ego centric (one summit's region, not a global tessellation), its generators are attribute filtered (only higher peaks qualify), and its narrowest radius is the isolation distance. It is built on established parts, spherical Voronoi and Delaunay neighbours and topographic isolation. Using this specific region as an isolation footprint is the new part.</p>
+          <h3>Copy the definition</h3>
+          <p>LaTeX source, for anyone who wants to reproduce or extend it:</p>
+          <pre id="formula-source"><code>H(P) = \{\, q : h_q &gt; h_P,\ \delta(P,q) &gt; \varepsilon \,\}
+\rho(\theta,q) = \operatorname{atan2}\!\left(\tan(d_q/2),\ \cos(\theta-\alpha_q)\right)
+j(\theta) = \operatorname*{arg\,min}_{q \in H}\ \rho(\theta,q)
+V = \{\, q \in H : \exists\, \theta,\ j(\theta)=q \,\}
+E(P) = \text{spherical polygon through } V \text{ ordered by } \alpha
+A(E) = R^2 \int_{0}^{2\pi}\bigl(1-\cos r(\theta)\bigr)\,d\theta
+\min_{\theta} r(\theta) = \operatorname{isolation}(P)</code></pre>
+          <button id="copy-formula" type="button" class="rankings-button">Copy LaTeX</button>
+          <h3>Extend it</h3>
+          <p>The same construction applies to all catalogued peaks rather than these 40, to submarine seamounts, to base to peak height instead of sea level elevation, and to other planetary bodies.</p>
+          <h3>Isolation and higher neighbours</h3>
+          <p>Isolation is the great circle distance to the nearest higher catalogued peak, which is the shortest spoke. Each of the 1,440 bearings is won by the higher peak that most tightly bounds it; the winners are the summit's higher neighbours and the polygon's vertices.</p>
+          <h3>Reading the map</h3>
+          <p>Spokes run from the summit (the hub) to each higher neighbour, coloured by distance; the nearest is the isolation. The shaded region is the dominance region. Web mode shows every summit's spokes at once.</p>
+          <h3>Why Aconcagua looks like the whole world with a hole</h3>
+          <p>Aconcagua's higher neighbours are all clustered in one direction, the Himalaya and Karakoram, thousands of km away across Asia. With no higher ground in any other direction, its dominance region wraps almost the entire planet and leaves only a small excluded cap near its antipode. That is why its dominance region renders as the world minus a hole, and why it tops the dominance area ranking.</p>
+          <h3>Data and caveats</h3>
+          <p>Higher peaks come from the GeoNames allCountries gazetteer (feature codes PK, PKS, MT, VLC, HLL), with a stale elevation guard (rejecting entries whose listed elevation exceeds the DEM by more than 1,000 m) and two corrected coordinates (Mascarin Peak to Marion Island; Joe's Hill to Kiritimati). Coverage is thinnest near sea level and over Antarctica, so a few summits (for example Mawson Peak) reflect the nearest higher catalogued peak rather than a terrain traced ridge, and can differ from the Wikipedia figure.</p>
+          <h3>Rendering</h3>
+          <p>MapLibre GL JS, globe or Web Mercator projection, Esri World Imagery, optional AWS Terrarium 3D terrain.</p>
         </div>
       </dialog>
     </main>

@@ -156,7 +156,7 @@ def build_summit_entry(summit, names, lats, lons, elevs):
     nhn = min(jailers, key=lambda j: j["distanceKm"])
     assert nhn["distanceKm"] == iso_km, summit["id"]  # nearest higher is always a jailer
 
-    ring, area_km2 = jailer_ring(
+    ring, area_km2, dim_region = jailer_ring(
         lat0, lon0,
         lats_h[contributing],
         lons_h[contributing],
@@ -170,6 +170,7 @@ def build_summit_entry(summit, names, lats, lons, elevs):
         "ring": ring,
         "ringAreaKm2": round(area_km2, 1) if area_km2 is not None else None,
         "meanSpokeKm": round(float(np.mean([j["distanceKm"] for j in jailers])), 1),
+        "dimRegion": dim_region,
     }
 
     row["computed_iso"] = iso_km

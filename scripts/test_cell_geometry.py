@@ -165,7 +165,7 @@ def _square_jailers():
 def test_jailer_ring_square():
     from shapely.geometry import Point, shape
 
-    geometry, area = jailer_ring(0.0, 0.0, *_square_jailers())
+    geometry, area, dim = jailer_ring(0.0, 0.0, *_square_jailers())
     geom = shape(geometry)
     assert geom.is_valid
     assert geom.contains(Point(0.0, 0.0))          # hub inside
@@ -176,8 +176,8 @@ def test_jailer_ring_square():
 
 def test_jailer_ring_needs_three_vertices():
     lats, lons, bearings, dists = _square_jailers()
-    geometry, area = jailer_ring(0.0, 0.0, lats[:2], lons[:2], bearings[:2], dists[:2])
-    assert geometry is None and area is None
+    geometry, area, dim = jailer_ring(0.0, 0.0, lats[:2], lons[:2], bearings[:2], dists[:2])
+    assert geometry is None and area is None and dim is None
 
 
 def test_jailer_ring_antimeridian():
@@ -187,11 +187,12 @@ def test_jailer_ring_antimeridian():
     lons = np.array([179.5, -170.5, 179.5, 169.5])
     bearings = np.array([0.0, 90.0, 180.0, 270.0])
     dists = np.full(4, np.radians(10.0)) * 6371.0088
-    geometry, area = jailer_ring(0.0, 179.5, lats, lons, bearings, dists)
+    geometry, area, dim = jailer_ring(0.0, 179.5, lats, lons, bearings, dists)
     geom = shape(geometry)
     assert geometry["type"] == "MultiPolygon" and geom.is_valid
     assert geom.bounds[0] >= -180 and geom.bounds[2] <= 180
     assert 3.4e6 < area < 4.2e6
+    assert shape(dim).is_valid
 
 
 def test_jailer_ring_containing_south_pole():
@@ -202,7 +203,7 @@ def test_jailer_ring_containing_south_pole():
     lons = np.array([0.0, 90.0, -90.0, 180.0])
     bearings = np.array([0.0, 90.0, 270.0, 180.0])
     dists = np.full(4, np.radians(10.0)) * 6371.0088
-    geometry, area = jailer_ring(-85.0, 0.0, lats, lons, bearings, dists)
+    geometry, area, dim = jailer_ring(-85.0, 0.0, lats, lons, bearings, dists)
     geom = shape(geometry)
     assert geom.is_valid
     assert geom.bounds[1] <= -89.9  # ring closed through the pole
@@ -219,7 +220,7 @@ def test_jailer_ring_narrow_cluster_wraps_hub():
     lats = np.array([30.0, 35.0, 28.0, 36.0])
     lons = np.array([75.0, 82.0, 88.0, 95.0])
     d, alpha = angular_distance_and_bearing(hub_lat, hub_lon, lats, lons)
-    geometry, area = jailer_ring(
+    geometry, area, dim = jailer_ring(
         hub_lat, hub_lon, lats, lons, np.degrees(alpha), d * 6371.0088
     )
     geom = shape(geometry)
@@ -239,7 +240,22 @@ def test_jailer_ring_tied_bearings():
     lons = np.array([0.0, 0.0, 10.0, 0.0])
     bearings = np.array([0.0, 0.0, 90.0, 180.0])
     dists = np.array([10.0, 20.0, 10.0, 10.0]) * 111.19
-    geometry, area = jailer_ring(0.0, 0.0, lats, lons, bearings, dists)
+    geometry, area, dim = jailer_ring(0.0, 0.0, lats, lons, bearings, dists)
     geom = shape(geometry)
     assert geom.is_valid
     assert area > 1.0e6
+
+
+def test_dominance_complement_valid_excludes_hub():
+    from shapely.geometry import Point, shape
+    from cell_geometry import build_star_geometry, dominance_complement
+    import numpy as np
+
+    theta = np.linspace(0, 2 * np.pi, 720, endpoint=False)
+    R = np.full(720, np.radians(10.0))              # small ring near (0,0)
+    ring = build_star_geometry(0.0, 0.0, theta, R)
+    dim = dominance_complement(ring)
+    geom = shape(dim)
+    assert geom.is_valid
+    assert not geom.contains(Point(0.0, 0.0))       # hub is inside the ring, not the complement
+    assert geom.contains(Point(120.0, 40.0))        # far from the hub: inside the complement

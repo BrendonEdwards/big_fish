@@ -117,15 +117,62 @@ def ring_to_geojson_geometry(lats, lons, north_pole, south_pole):
     )
 
 
+def build_star_geometry(hub_lat, hub_lon, theta, R):
+    """Valid GeoJSON geometry for a star-shaped region about (hub_lat, hub_lon)
+    with boundary angular distance R(theta) in radians. Handles the single-pole
+    and both-poles (world-with-hole) cases. Returns a GeoJSON geometry dict."""
+    lats, lons = cell_ring(hub_lat, hub_lon, theta, R)
+    north, south = poles_inside(hub_lat, np.mod(theta, 2 * np.pi), R)
+    if north and south:
+        span = float(np.max(lons) - np.min(lons))
+        assert span < 350.0, "antipodal blob crossing the antimeridian is not supported"
+        hole = list(zip(lons.tolist(), lats.tolist()))
+        hole.append(hole[0])
+        shell = [(-180.0, -90.0), (180.0, -90.0), (180.0, 90.0), (-180.0, 90.0), (-180.0, -90.0)]
+        geometry = mapping(Polygon(shell, holes=[hole]))
+    else:
+        geometry = ring_to_geojson_geometry(lats, lons, north, south)
+    from shapely.geometry import shape
+    assert shape(geometry).is_valid, "star geometry must be a valid polygon"
+    return geometry
+
+
+def _densified_world():
+    """World rectangle with subdivided edges so the globe tessellates the
+    large complement fill smoothly."""
+    step = 4.0
+    lons = list(np.arange(-180.0, 180.0, step)) + [180.0]
+    lats = list(np.arange(-90.0, 90.0, step)) + [90.0]
+    ring = ([(lon, -90.0) for lon in lons]
+            + [(180.0, lat) for lat in lats]
+            + [(lon, 90.0) for lon in reversed(lons)]
+            + [(-180.0, lat) for lat in reversed(lats)])
+    return Polygon(ring)
+
+
+def dominance_complement(ring_geometry):
+    """GeoJSON geometry of everything OUTSIDE the dominance ring: the world
+    minus the ring. Uses a boolean difference on the already-valid,
+    antimeridian-fixed ring geometry, so every antimeridian/pole case is
+    handled by shapely. Returns a GeoJSON geometry dict, or None if empty."""
+    from shapely.geometry import shape
+    comp = _densified_world().difference(shape(ring_geometry))
+    if comp.is_empty:
+        return None
+    assert comp.is_valid, "dominance complement must be a valid polygon"
+    return mapping(comp)
+
+
 def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg, jailer_dists_km, step_deg=0.5):
     """Ring-of-jailers polygon: jailer vertices in bearing order, edges swept
     by interpolating bearing and distance from the hub (star-shaped by
     construction, so the ring can never self-intersect; the boundary between
     two jailers never dips below the nearer one's distance, so min boundary
     distance stays >= the isolation, touching it at the NHN vertex).
-    Returns (geojson geometry dict, area_km2) or (None, None) for < 3 jailers."""
+    Returns (geojson geometry dict, area_km2, dim_geometry dict) or
+    (None, None, None) for < 3 jailers."""
     if len(jailer_lats) < 3:
-        return None, None
+        return None, None, None
     order = np.argsort(jailer_bearings_deg)
     bearings = np.asarray(jailer_bearings_deg, dtype=float)[order]
     dists = np.asarray(jailer_dists_km, dtype=float)[order] / EARTH_RADIUS_KM
@@ -160,20 +207,6 @@ def jailer_ring(hub_lat, hub_lon, jailer_lats, jailer_lons, jailer_bearings_deg,
     # the closing wrap still guarantees the full 360-degree sweep.
     assert np.all(dtheta >= 0), "ring bearing sweep must be non-decreasing"
     area_km2 = float(EARTH_RADIUS_KM ** 2 * np.sum((1.0 - np.cos(R)) * dtheta))
-    lats, lons = cell_ring(hub_lat, hub_lon, theta, R)
-    north, south = poles_inside(hub_lat, np.mod(theta, 2 * np.pi), R)
-    if north and south:
-        # Near-circular ring around the hub's antipode: represent directly as
-        # the world rectangle with the ring as a hole — no heuristics needed.
-        span = float(np.max(lons) - np.min(lons))
-        assert span < 350.0, "antipodal blob crossing the antimeridian is not supported"
-        hole = list(zip(lons.tolist(), lats.tolist()))
-        hole.append(hole[0])
-        shell = [(-180.0, -90.0), (180.0, -90.0), (180.0, 90.0), (-180.0, 90.0), (-180.0, -90.0)]
-        geometry = mapping(Polygon(shell, holes=[hole]))
-    else:
-        geometry = ring_to_geojson_geometry(lats, lons, north, south)
-    from shapely.geometry import shape
-    geom = shape(geometry)
-    assert geom.is_valid, "jailer ring must be a valid polygon"
-    return geometry, area_km2
+    ring_geometry = build_star_geometry(hub_lat, hub_lon, theta, R)
+    dim_geometry = dominance_complement(ring_geometry)
+    return ring_geometry, area_km2, dim_geometry
