@@ -154,8 +154,13 @@ try {
   // embedded dominance-region explainer: sized on open, interactive, math-only copy
   const explainerWidth = await page.evaluate(() => document.querySelector('#dominance-explainer')?.clientWidth ?? 0);
   if (explainerWidth <= 0) throw new Error('dominance explainer canvas has zero width after modal open');
-  const explainerBacking = await page.evaluate(() => document.querySelector('#dominance-explainer')?.width ?? 0);
-  if (explainerBacking <= 0) throw new Error('dominance explainer canvas was never drawn (backing width 0)');
+  // backing store must match the displayed size, proving draw() ran on open rather than the static 720 default
+  const backingMatches = await page.evaluate(() => {
+    const c = document.querySelector('#dominance-explainer');
+    const dpr = window.devicePixelRatio || 1;
+    return !!c && Math.abs(c.width - c.clientWidth * dpr) <= 2;
+  });
+  if (!backingMatches) throw new Error('dominance explainer canvas backing store does not match displayed size (draw did not run on open)');
   for (const id of ['#de-reset', '#de-shadow', '#de-spread', '#de-bisectors']) {
     const present = await page.evaluate((s) => !!document.querySelector(s), id);
     if (!present) throw new Error(`explainer control ${id} missing`);
@@ -174,7 +179,7 @@ try {
   if (bisBefore === bisAfter) throw new Error('bisectors toggle did not flip aria-pressed');
   await page.click('#de-bisectors'); // restore default (on)
   if (/cushion|pool|\bcue\b/i.test(geekText)) throw new Error('informal terms (cushion/pool/cue) leaked into the data-geeks copy');
-  await page.screenshot({ path: `${cacheDir}/explainer-embedded.png` });
+  await page.locator('#dominance-explainer').screenshot({ path: `${cacheDir}/explainer-embedded.png` });
   await page.keyboard.press('Escape');
   const panelText = await page.textContent('#info-panel');
   if (panelText.includes('—')) throw new Error('em dash found in info panel');
