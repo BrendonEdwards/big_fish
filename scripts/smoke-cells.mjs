@@ -151,6 +151,30 @@ try {
     return img.naturalWidth > 0;
   });
   if (!formulaLoaded) throw new Error('formula image failed to load (check /edwards-polygon.svg path)');
+  // embedded dominance-region explainer: sized on open, interactive, math-only copy
+  const explainerWidth = await page.evaluate(() => document.querySelector('#dominance-explainer')?.clientWidth ?? 0);
+  if (explainerWidth <= 0) throw new Error('dominance explainer canvas has zero width after modal open');
+  const explainerBacking = await page.evaluate(() => document.querySelector('#dominance-explainer')?.width ?? 0);
+  if (explainerBacking <= 0) throw new Error('dominance explainer canvas was never drawn (backing width 0)');
+  for (const id of ['#de-reset', '#de-shadow', '#de-spread', '#de-bisectors']) {
+    const present = await page.evaluate((s) => !!document.querySelector(s), id);
+    if (!present) throw new Error(`explainer control ${id} missing`);
+  }
+  await page.click('#de-shadow');
+  await page.waitForTimeout(150);
+  const shadowRows = await page.evaluate(() => document.querySelector('#de-readout').textContent.match(/in shadow/g)?.length ?? 0);
+  if (shadowRows < 1) throw new Error('explainer "Show a peak in shadow" produced no shadowed row');
+  await page.click('#de-reset');
+  await page.waitForTimeout(150);
+  const resetShadow = await page.evaluate(() => document.querySelector('#de-readout').textContent.includes('in shadow'));
+  if (resetShadow) throw new Error('explainer Reset should leave no shadowed peaks');
+  const bisBefore = await page.evaluate(() => document.querySelector('#de-bisectors').getAttribute('aria-pressed'));
+  await page.click('#de-bisectors');
+  const bisAfter = await page.evaluate(() => document.querySelector('#de-bisectors').getAttribute('aria-pressed'));
+  if (bisBefore === bisAfter) throw new Error('bisectors toggle did not flip aria-pressed');
+  await page.click('#de-bisectors'); // restore default (on)
+  if (/cushion|pool|\bcue\b/i.test(geekText)) throw new Error('informal terms (cushion/pool/cue) leaked into the data-geeks copy');
+  await page.screenshot({ path: `${cacheDir}/explainer-embedded.png` });
   await page.keyboard.press('Escape');
   const panelText = await page.textContent('#info-panel');
   if (panelText.includes('—')) throw new Error('em dash found in info panel');

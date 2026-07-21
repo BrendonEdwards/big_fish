@@ -18,7 +18,7 @@ const PRESETS = {
     { name: 'Corrie', bearing: 158, dist: 18 },
     { name: 'Drum', bearing: 232, dist: 40 },
     { name: 'Esk', bearing: 300, dist: 26 },
-    { name: 'You', bearing: 55, dist: 45 },
+    { name: 'You', bearing: 55, dist: 28 },
   ],
   shadow: [
     { name: 'Alba', bearing: 20, dist: 22 },
