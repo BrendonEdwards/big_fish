@@ -178,7 +178,8 @@ try {
   const bisAfter = await page.evaluate(() => document.querySelector('#de-bisectors').getAttribute('aria-pressed'));
   if (bisBefore === bisAfter) throw new Error('bisectors toggle did not flip aria-pressed');
   await page.click('#de-bisectors'); // restore default (on)
-  if (/cushion|pool|\bcue\b/i.test(geekText)) throw new Error('informal terms (cushion/pool/cue) leaked into the data-geeks copy');
+  const explainerCopy = await page.textContent('#methodology-dialog');
+  if (/cushion|pool|\bcue\b/i.test(explainerCopy)) throw new Error('informal terms (cushion/pool/cue) leaked into the data-geeks copy');
   await page.locator('#dominance-explainer').screenshot({ path: `${cacheDir}/explainer-embedded.png` });
   await page.keyboard.press('Escape');
   const panelText = await page.textContent('#info-panel');
