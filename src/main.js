@@ -1,5 +1,6 @@
 import { initRankings } from './rankings.js';
 import { initMethodology } from './methodology.js';
+import { initDominanceExplainer } from './dominance-explainer.js';
 
 const MAX_TILE_ZOOM = 19;
 const SPOTLIGHT_OPACITY = 0.6;
@@ -308,7 +309,8 @@ map.on('load', () => {
     },
   });
 
-  initMethodology();
+  const dominanceExplainer = initDominanceExplainer();
+  initMethodology({ onOpen: dominanceExplainer.draw });
 
   const dashSequence = [
     [0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0],

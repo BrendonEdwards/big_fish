@@ -1,6 +1,6 @@
-export function initMethodology() {
+export function initMethodology(options = {}) {
   const dialog = document.querySelector('#methodology-dialog');
-  const open = () => dialog.showModal();
+  const open = () => { dialog.showModal(); options.onOpen?.(); };
   document.querySelector('#open-methodology').addEventListener('click', open);
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
   const copyButton = document.querySelector('#copy-formula');
