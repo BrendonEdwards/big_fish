@@ -76,6 +76,18 @@
         <div class="prose-scroll">
           <h3>The dominance region</h3>
           <p>Topographic isolation reduces a summit to a single number: the distance to its nearest higher neighbour. The dominance region generalises that number into a two dimensional region, the ground a summit owns before higher terrain takes over, bounded by the higher peaks that surround it.</p>
+          <h3>See how a summit picks its higher neighbours</h3>
+          <p>Looking straight down on a summit (amber, centre). Every other dot is a higher peak. Each compass direction is awarded to whichever higher peak is nearest that way, so each surviving peak owns a wedge of directions and becomes a vertex of the region. The faint line at right angles across each spoke is that peak's perpendicular bisector, the halfway boundary the direction has to reach it. Drag any peak: park it behind a nearer one and it wins nothing; slide it to the side and it carves out its own wedge.</p>
+          <div id="dominance-explainer-board" class="de-board">
+            <canvas id="dominance-explainer" width="720" height="720" aria-label="Top-down diagram of a summit and the higher peaks around it"></canvas>
+          </div>
+          <div class="de-controls">
+            <button id="de-reset" type="button" class="rankings-button">Reset</button>
+            <button id="de-shadow" type="button" class="rankings-button">Show a peak in shadow</button>
+            <button id="de-spread" type="button" class="rankings-button">Spread them out</button>
+            <button id="de-bisectors" type="button" class="rankings-button" aria-pressed="true">Perpendicular bisectors: on</button>
+          </div>
+          <dl class="de-readout" id="de-readout"></dl>
           <figure class="formula"><img src="/edwards-polygon.svg" alt="Dominance region formal definition" /></figure>
           <p>P is the summit at elevation h_P. H(P) is the set of catalogued peaks strictly higher than P and beyond a 2 km self exclusion. For each higher peak q at angular distance d_q and bearing alpha_q, and for each of 1,440 compass bearings theta (every 0.25 degrees), rho selects the higher peak that most tightly bounds that bearing. The winners V are the summit's higher neighbours and the polygon's vertices; the boundary is swept through them, and its area follows the spherical integral above. The narrowest radius equals the topographic isolation.</p>
           <h3>How it differs from Voronoi and Thiessen</h3>

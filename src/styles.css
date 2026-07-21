@@ -114,3 +114,41 @@ dd { margin: .1rem 0 0; color: #fff; }
 #methodology-dialog .formula img { max-width: 100%; height: auto; }
 #methodology-dialog #formula-source { max-height: 12rem; overflow: auto; background: rgb(255 255 255 / 6%); border: 1px solid rgb(255 255 255 / 12%); border-radius: .5rem; padding: .6rem .8rem; color: #cfe0f0; font-size: .78rem; white-space: pre; }
 #methodology-dialog #copy-formula { margin: .5rem 0 0; width: auto; padding: .4rem .9rem; }
+.de-board {
+  margin: .75rem 0;
+  padding: .6rem;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: .6rem;
+}
+#dominance-explainer {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: .5rem;
+  touch-action: none;
+  cursor: grab;
+}
+#dominance-explainer:active { cursor: grabbing; }
+.de-controls { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 .6rem; }
+.de-readout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .25rem .75rem;
+  margin: 0 0 .5rem;
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+}
+.de-readout dt {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  color: #e8eef5;
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.de-readout dd { margin: 0; color: #9fb3c8; }
+.de-readout .de-shadowed { color: #6b7a8d; }
+.de-swatch { display: inline-block; width: .62rem; height: .62rem; border-radius: 2px; margin-right: .45rem; }
